@@ -73,12 +73,12 @@ TaskFlow dynamically scores active tasks using the following matrix:
 ## 🔑 Initial Setup & Seeding
 
 ### 1. Configure Environment Variables
-Create a [`.env.local`](file:///D:/Smart%20Task%20Prioritization%20System/.env.local) file in the root directory:
+Create a `.env.local` file in the root directory:
 
 ```env
-MONGODB_URI=mongodb+srv://tarun:M30PWi1NGUc69kpD@cluster0.x6g6ncr.mongodb.net/taskflow?retryWrites=true&w=majority
+MONGODB_URI=your_mongodb_connection_string
 MONGODB_DB=taskflow
-AUTH_SECRET=9f83ea647ef3a3d24266187b8d728e83b4b8893d59e4b6a839f8641bc389f81d
+AUTH_SECRET=your_secure_random_secret
 ```
 
 ### 2. Install & Start Development Server
@@ -96,5 +96,5 @@ Initialize user sessions and tasks by visiting the seed API in your browser:
 
 | Account Role | Email Address | Password |
 |---|---|---|
-| **Administrator** | `admin@taskflow.com` | `adminpassword` |
-| **Employee** | `employee@taskflow.com` | `employeepassword` |
+| **Administrator** | `admin@taskflow.com` | Use demo credentials configured locally |
+| **Employee** | `employee@taskflow.com` | Use demo credentials configured locally |
