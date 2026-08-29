@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { getEmployeesCollection, getTasksCollection } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import { Employee } from "@/types/employee";
+import { getCurrentUser } from "@/lib/auth";
 
 function docToEmployee(
   doc: Record<string, unknown>,
@@ -50,6 +51,14 @@ export async function GET() {
 // POST /api/employees
 export async function POST(request: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user || user.role !== "ADMIN") {
+      return Response.json(
+        { error: "Forbidden: Only administrators can manage employees" },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
 
     if (!body.name?.trim()) {

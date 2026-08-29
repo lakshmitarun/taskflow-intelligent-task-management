@@ -41,3 +41,18 @@ export async function verifySession(token: string) {
     return null;
   }
 }
+
+import { cookies } from "next/headers";
+
+export async function getCurrentUser() {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("session")?.value;
+    if (!token) return null;
+    return await verifySession(token);
+  } catch (err) {
+    console.error("Failed to get current user session:", err);
+    return null;
+  }
+}
+

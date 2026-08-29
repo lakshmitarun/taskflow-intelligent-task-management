@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Task, Priority, TaskStatus } from "@/types/task";
 import { useTaskStore } from "@/store/task-store";
 import { useEmployeeStore } from "@/store/employee-store";
+import { useAuthStore } from "@/store/auth-store";
 import { format } from "date-fns";
 import { X } from "lucide-react";
 
@@ -25,6 +26,7 @@ const defaultForm = {
 export function TaskForm({ task, onClose }: TaskFormProps) {
   const { addTask, updateTask } = useTaskStore();
   const { employees, fetchEmployees } = useEmployeeStore();
+  const { user } = useAuthStore();
   const [form, setForm] = useState(defaultForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
@@ -174,7 +176,10 @@ export function TaskForm({ task, onClose }: TaskFormProps) {
           {/* Assign To */}
           <div className="form-group">
             <label className="form-label">Assign To</label>
-            <select className="form-input form-select" {...field("assignedTo")}>
+            <select
+              className="form-input form-select"
+              {...field("assignedTo")}
+            >
               <option value="">— Unassigned —</option>
               {employees.map((emp) => (
                 <option key={emp._id} value={emp._id}>

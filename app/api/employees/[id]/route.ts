@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { getEmployeesCollection } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import { Employee } from "@/types/employee";
+import { getCurrentUser } from "@/lib/auth";
 
 function docToEmployee(doc: Record<string, unknown>): Employee {
   const { _id, ...rest } = doc;
@@ -14,6 +15,14 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getCurrentUser();
+    if (!user || user.role !== "ADMIN") {
+      return Response.json(
+        { error: "Forbidden: Only administrators can manage employees" },
+        { status: 403 }
+      );
+    }
+
     const { id } = await params;
     const body = await request.json();
 
@@ -47,6 +56,14 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getCurrentUser();
+    if (!user || user.role !== "ADMIN") {
+      return Response.json(
+        { error: "Forbidden: Only administrators can manage employees" },
+        { status: 403 }
+      );
+    }
+
     const { id } = await params;
     const col = await getEmployeesCollection();
     const result = await col.deleteOne({ _id: new ObjectId(id) });

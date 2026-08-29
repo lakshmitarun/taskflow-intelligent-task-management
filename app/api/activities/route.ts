@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getDb } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
+import { getCurrentUser } from "@/lib/auth";
 
 export interface Activity {
   _id?: string;
@@ -16,6 +17,14 @@ export interface Activity {
 // GET /api/activities?limit=20
 export async function GET(request: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user || user.role !== "ADMIN") {
+      return Response.json(
+        { error: "Forbidden: Only administrators can view activity history" },
+        { status: 403 }
+      );
+    }
+
     const db = await getDb();
     const col = db.collection("activities");
     const limit = parseInt(request.nextUrl.searchParams.get("limit") ?? "20");

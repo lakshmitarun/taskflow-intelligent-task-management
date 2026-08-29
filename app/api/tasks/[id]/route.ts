@@ -3,6 +3,7 @@ import { getTasksCollection } from "@/lib/mongodb";
 import { calculateSmartScore } from "@/lib/priority-calculator";
 import { Task } from "@/types/task";
 import { ObjectId } from "mongodb";
+import { getCurrentUser } from "@/lib/auth";
 
 function docToTask(doc: Record<string, unknown>): Task {
   const { _id, ...rest } = doc;
@@ -36,14 +37,25 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await params;
     const body = await request.json();
 
     // Strip protected fields
     const { id: _id, createdAt: _c, smartScore: _s, ...updates } = body;
-    const patch = { ...updates, updatedAt: new Date().toISOString() };
 
     const col = await getTasksCollection();
+    const existingTask = await col.findOne({ _id: new ObjectId(id) });
+    if (!existingTask) {
+      return Response.json({ error: "Task not found" }, { status: 404 });
+    }
+
+
+    const patch = { ...updates, updatedAt: new Date().toISOString() };
     const result = await col.findOneAndUpdate(
       { _id: new ObjectId(id) },
       { $set: patch },
@@ -67,6 +79,10 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const { id } = await params;
     const col = await getTasksCollection();
     const result = await col.deleteOne({ _id: new ObjectId(id) });

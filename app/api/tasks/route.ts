@@ -3,6 +3,7 @@ import { getTasksCollection } from "@/lib/mongodb";
 import { calculateSmartScore } from "@/lib/priority-calculator";
 import { Task } from "@/types/task";
 import { ObjectId } from "mongodb";
+import { getCurrentUser } from "@/lib/auth";
 
 function docToTask(doc: Record<string, unknown>): Task {
   const { _id, ...rest } = doc;
@@ -27,6 +28,11 @@ export async function GET() {
 // POST /api/tasks
 export async function POST(request: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json();
 
     if (!body.title?.trim()) {
@@ -41,6 +47,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
 
     const now = new Date().toISOString();
     const doc = {
