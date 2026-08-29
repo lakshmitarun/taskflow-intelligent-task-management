@@ -3,6 +3,7 @@
 import { Task, TaskStatus } from "@/types/task";
 import { useTaskStore } from "@/store/task-store";
 import { useEmployeeStore } from "@/store/employee-store";
+import { useAuthStore } from "@/store/auth-store";
 import { getDeadlineLabel, isOverdue } from "@/lib/priority-calculator";
 import { Pencil, Trash2, Clock, Zap, ChevronRight, UserCircle } from "lucide-react";
 import { clsx } from "clsx";
@@ -33,6 +34,7 @@ const nextStatus: Record<TaskStatus, TaskStatus | null> = {
 export function TaskCard({ task, onEdit }: TaskCardProps) {
   const { deleteTask, updateStatus } = useTaskStore();
   const { employees } = useEmployeeStore();
+  const { user } = useAuthStore();
 
   const priority = priorityConfig[task.priority];
   const status = statusConfig[task.status];
@@ -95,13 +97,15 @@ export function TaskCard({ task, onEdit }: TaskCardProps) {
           <button className="icon-btn" onClick={() => onEdit(task)} aria-label="Edit task">
             <Pencil size={15} />
           </button>
-          <button
-            className="icon-btn icon-btn--danger"
-            onClick={() => deleteTask(task.id)}
-            aria-label="Delete task"
-          >
-            <Trash2 size={15} />
-          </button>
+          {user?.role === "ADMIN" && (
+            <button
+              className="icon-btn icon-btn--danger"
+              onClick={() => deleteTask(task.id)}
+              aria-label="Delete task"
+            >
+              <Trash2 size={15} />
+            </button>
+          )}
         </div>
       </div>
     </div>

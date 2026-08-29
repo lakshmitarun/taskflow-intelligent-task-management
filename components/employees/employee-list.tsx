@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Employee, getWorkloadLevel } from "@/types/employee";
 import { useEmployeeStore } from "@/store/employee-store";
+import { useAuthStore } from "@/store/auth-store";
 import { EmployeeForm } from "./employee-form";
 import { Pencil, Trash2, Mail, Briefcase, Building2, Users } from "lucide-react";
 import { clsx } from "clsx";
@@ -16,6 +17,7 @@ const workloadConfig = {
 export function EmployeeList() {
   const { employees, deleteEmployee } = useEmployeeStore();
   const [editEmployee, setEditEmployee] = useState<Employee | null>(null);
+  const { user } = useAuthStore();
 
   if (employees.length === 0) {
     return (
@@ -74,22 +76,24 @@ export function EmployeeList() {
                 <span className={clsx("workload-badge", wl.cls)}>
                   {emp.activeTaskCount ?? 0} active task{emp.activeTaskCount !== 1 ? "s" : ""} · {wl.label}
                 </span>
-                <div className="task-card__icon-actions">
-                  <button
-                    className="icon-btn"
-                    onClick={() => setEditEmployee(emp)}
-                    aria-label="Edit employee"
-                  >
-                    <Pencil size={15} />
-                  </button>
-                  <button
-                    className="icon-btn icon-btn--danger"
-                    onClick={() => deleteEmployee(emp._id)}
-                    aria-label="Delete employee"
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                </div>
+                {user?.role === "ADMIN" && (
+                  <div className="task-card__icon-actions">
+                    <button
+                      className="icon-btn"
+                      onClick={() => setEditEmployee(emp)}
+                      aria-label="Edit employee"
+                    >
+                      <Pencil size={15} />
+                    </button>
+                    <button
+                      className="icon-btn icon-btn--danger"
+                      onClick={() => deleteEmployee(emp._id)}
+                      aria-label="Delete employee"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           );

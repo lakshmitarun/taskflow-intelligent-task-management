@@ -80,8 +80,11 @@ export async function DELETE(
 ) {
   try {
     const user = await getCurrentUser();
-    if (!user) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    if (!user || user.role !== "ADMIN") {
+      return Response.json(
+        { error: "Forbidden: Only administrators can delete tasks" },
+        { status: 403 }
+      );
     }
     const { id } = await params;
     const col = await getTasksCollection();
