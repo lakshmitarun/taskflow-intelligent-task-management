@@ -1,8 +1,12 @@
 import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
 
-const SECRET_KEY = process.env.AUTH_SECRET || "taskflow-fallback-jwt-secret-key-32-chars";
+const SECRET_KEY = process.env.AUTH_SECRET;
+if (!SECRET_KEY) {
+  throw new Error("AUTH_SECRET environment variable is not set. Add it to your .env file.");
+}
 const key = new TextEncoder().encode(SECRET_KEY);
+
 
 export function hashPassword(password: string): string {
   return bcrypt.hashSync(password, 10);
