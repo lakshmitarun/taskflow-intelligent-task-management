@@ -1,10 +1,11 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { Moon, Sun, User, LogOut } from "lucide-react";
+import { Moon, Sun, User, LogOut, Menu } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/auth-store";
+import { useUIStore } from "@/store/ui-store";
 
 const pageTitles: Record<string, { title: string; subtitle: string }> = {
   "/": { title: "Dashboard", subtitle: "Overview of your work" },
@@ -21,6 +22,7 @@ export function Header() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const { user, init, logout } = useAuthStore();
+  const { toggleSidebar } = useUIStore();
 
   useEffect(() => {
     setMounted(true);
@@ -41,8 +43,20 @@ export function Header() {
   return (
     <header className="app-header">
       <div className="header-left">
-        <h1 className="header-title">{page.title}</h1>
-        <p className="header-subtitle">{page.subtitle}</p>
+        {!isAuthPage && (
+          <button
+            className="icon-btn mobile-menu-btn"
+            onClick={toggleSidebar}
+            aria-label="Open menu"
+            title="Open Menu"
+          >
+            <Menu size={18} />
+          </button>
+        )}
+        <div className="header-title-group">
+          <h1 className="header-title">{page.title}</h1>
+          <p className="header-subtitle">{page.subtitle}</p>
+        </div>
       </div>
       <div className="header-right">
         {mounted && !isAuthPage && (
