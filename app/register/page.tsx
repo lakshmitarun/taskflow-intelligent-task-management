@@ -11,7 +11,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [role, setRole] = useState<"ADMIN" | "EMPLOYEE">("EMPLOYEE");
+  const [role, setRole] = useState<"ADMIN" | "EMPLOYEE">("ADMIN");
   const [validationError, setValidationError] = useState("");
   const router = useRouter();
 
@@ -114,8 +114,8 @@ export default function RegisterPage() {
                 onChange={(e) => setRole(e.target.value as "ADMIN" | "EMPLOYEE")}
                 disabled={loading}
               >
-                <option value="EMPLOYEE">Employee (Tasks access only)</option>
-                <option value="ADMIN">Administrator (Full control)</option>
+                <option value="ADMIN">Administrator (Full access)</option>
+                <option value="EMPLOYEE">Employee (Tasks only)</option>
               </select>
             </div>
           </div>
