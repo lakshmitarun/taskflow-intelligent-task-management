@@ -9,6 +9,7 @@ import {
   BarChart2,
   Zap,
   X,
+  ShieldCheck,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { useAuthStore } from "@/store/auth-store";
@@ -19,6 +20,7 @@ const navItems = [
   { href: "/tasks", icon: ListTodo, label: "Tasks" },
   { href: "/employees", icon: Users, label: "Team", roles: ["ADMIN"] },
   { href: "/analytics", icon: BarChart2, label: "Analytics", roles: ["ADMIN"] },
+  { href: "/approvals", icon: ShieldCheck, label: "Approvals", roles: ["ADMIN"] },
 ];
 
 export function Sidebar() {

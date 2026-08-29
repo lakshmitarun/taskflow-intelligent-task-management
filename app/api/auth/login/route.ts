@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
       fullName: userDoc.fullName,
       email: userDoc.email,
       role: userDoc.role as "ADMIN" | "EMPLOYEE",
+      adminRequestStatus: userDoc.adminRequestStatus,
     };
 
     const token = await signSession(userPayload);

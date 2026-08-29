@@ -28,12 +28,15 @@ export async function POST(request: NextRequest) {
 
     const passwordHash = hashPassword(password);
     const now = new Date().toISOString();
+    const isRequestingAdmin = role === "ADMIN";
 
     const doc = {
       fullName: fullName.trim(),
       email: emailClean,
       passwordHash,
-      role: role === "ADMIN" ? "ADMIN" : "EMPLOYEE",
+      role: "EMPLOYEE", // Register as employee initially
+      adminRequestStatus: isRequestingAdmin ? ("PENDING" as const) : undefined,
+      adminRequestRequestedAt: isRequestingAdmin ? now : undefined,
       createdAt: now,
       updatedAt: now,
     };
@@ -44,6 +47,7 @@ export async function POST(request: NextRequest) {
       fullName: doc.fullName,
       email: doc.email,
       role: doc.role as "ADMIN" | "EMPLOYEE",
+      adminRequestStatus: doc.adminRequestStatus,
     };
 
     const token = await signSession(userPayload);

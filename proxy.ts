@@ -16,11 +16,12 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // Role-based authorization: Employees cannot access team management or analytics pages
+  // Role-based authorization: Employees cannot access team management, analytics, or approvals pages
   if (payload.role === "EMPLOYEE") {
     if (
       pathname.startsWith("/employees") ||
-      pathname.startsWith("/analytics")
+      pathname.startsWith("/analytics") ||
+      pathname.startsWith("/approvals")
     ) {
       return NextResponse.redirect(new URL("/", request.url));
     }

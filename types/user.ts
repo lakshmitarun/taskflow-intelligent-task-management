@@ -4,4 +4,6 @@ export interface User {
   employeeId?: string;
   email: string;
   role: "ADMIN" | "EMPLOYEE";
+  adminRequestStatus?: "PENDING" | "APPROVED" | "REJECTED";
+  adminRequestRequestedAt?: string;
 }
