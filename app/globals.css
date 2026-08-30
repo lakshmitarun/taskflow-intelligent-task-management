@@ -1379,4 +1379,19 @@ input, select, textarea { font-family: var(--font); }
   border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
+/* ─── Performance Table ─── */
+.performance-table th {
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.performance-table tr:hover {
+  background: rgba(99, 102, 241, 0.02);
+}
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
 

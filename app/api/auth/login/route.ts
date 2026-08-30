@@ -33,15 +33,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const approvalStatus = userDoc.approvalStatus || (userDoc.adminRequestStatus === "PENDING" ? "PENDING" : userDoc.adminRequestStatus === "REJECTED" ? "REJECTED" : "APPROVED");
+    if (approvalStatus === "PENDING") {
+      return Response.json(
+        { error: "Your admin registration request is pending. Please wait for approval from an administrator." },
+        { status: 403 }
+      );
+    }
+    if (approvalStatus === "REJECTED") {
+      return Response.json(
+        { error: "Your admin registration request was not approved. Please contact an administrator." },
+        { status: 403 }
+      );
+    }
+
     const userPayload = {
       id: String(userDoc._id),
       fullName: userDoc.fullName,
       email: userDoc.email,
       role: userDoc.role as "ADMIN" | "EMPLOYEE",
+      approvalStatus,
       adminRequestStatus: userDoc.adminRequestStatus,
     };
 
-    const token = await signSession(userPayload);
+    const token = await signSession({
+      id: userPayload.id,
+      fullName: userPayload.fullName,
+      email: userPayload.email,
+      role: userPayload.role,
+    });
 
     // Set secure cookie
     const cookieStore = await cookies();

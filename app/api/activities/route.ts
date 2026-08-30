@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/auth";
 
 export interface Activity {
   _id?: string;
-  action: "TASK_CREATED" | "TASK_UPDATED" | "TASK_DELETED" | "STATUS_CHANGED" | "TASK_ASSIGNED";
+  action: "TASK_CREATED" | "TASK_UPDATED" | "TASK_DELETED" | "STATUS_CHANGED" | "TASK_ASSIGNED" | "ADMIN_APPROVED" | "ADMIN_REJECTED";
   description: string;
   taskId?: string;
   taskTitle?: string;

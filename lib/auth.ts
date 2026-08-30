@@ -47,13 +47,27 @@ export async function verifySession(token: string) {
 }
 
 import { cookies } from "next/headers";
+import { getDb } from "./mongodb";
+import { ObjectId } from "mongodb";
 
 export async function getCurrentUser() {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get("session")?.value;
     if (!token) return null;
-    return await verifySession(token);
+    const sessionUser = await verifySession(token);
+    if (!sessionUser) return null;
+
+    const db = await getDb();
+    const userDoc = await db.collection("users").findOne({ _id: new ObjectId(sessionUser.id) });
+    if (!userDoc) return null;
+
+    const approvalStatus = userDoc.approvalStatus || (userDoc.adminRequestStatus === "PENDING" ? "PENDING" : userDoc.adminRequestStatus === "REJECTED" ? "REJECTED" : "APPROVED");
+    if (approvalStatus === "PENDING" || approvalStatus === "REJECTED") {
+      return null;
+    }
+
+    return sessionUser;
   } catch (err) {
     console.error("Failed to get current user session:", err);
     return null;

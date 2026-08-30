@@ -13,6 +13,7 @@ export default function RegisterPage() {
   const [fullName, setFullName] = useState("");
   const [role, setRole] = useState<"ADMIN" | "EMPLOYEE">("ADMIN");
   const [validationError, setValidationError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent) {
@@ -29,14 +30,47 @@ export default function RegisterPage() {
       return;
     }
 
-    const success = await register(email, password, fullName, role);
-    if (success) {
-      router.push("/");
-      router.refresh();
+    const result = await register(email, password, fullName, role);
+    if (result.success) {
+      if (result.pendingApproval) {
+        setSuccessMessage(
+          "Your admin registration request has been submitted successfully. Please wait for approval from an existing administrator."
+        );
+      } else {
+        router.push("/");
+        router.refresh();
+      }
     }
   }
 
   const error = validationError || authError;
+
+  if (successMessage) {
+    return (
+      <div className="login-container">
+        <div className="login-card">
+          <div className="login-brand">
+            <div className="brand-icon login-brand-icon">
+              <Zap size={28} />
+            </div>
+            <span className="brand-name login-brand-name">TaskFlow</span>
+          </div>
+
+          <h2 className="login-title" style={{ textAlign: "center" }}>Request Submitted</h2>
+          <div className="pending-admin-message" style={{ margin: "20px 0", textAlign: "center", color: "var(--text-muted)", lineHeight: "1.6" }}>
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: "16px", color: "var(--grad-start)" }}>
+              <Shield size={48} />
+            </div>
+            <p style={{ fontSize: "14px" }}>{successMessage}</p>
+          </div>
+
+          <Link href="/login" className="btn btn--primary" style={{ display: "flex", justifyContent: "center", width: "100%", textAlign: "center" }}>
+            Back to Sign In
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="login-container">

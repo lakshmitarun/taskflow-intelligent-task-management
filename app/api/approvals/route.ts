@@ -18,19 +18,27 @@ export async function GET() {
     const col = db.collection("users");
 
     const requests = await col
-      .find({ adminRequestStatus: { $exists: true } })
+      .find({
+        $or: [
+          { adminRequestStatus: { $exists: true } },
+          { approvalStatus: { $exists: true } }
+        ]
+      })
       .sort({ adminRequestRequestedAt: -1 })
       .toArray();
 
     // Map database documents to clean user objects
-    const result = requests.map((doc) => ({
-      id: String(doc._id),
-      fullName: doc.fullName,
-      email: doc.email,
-      role: doc.role,
-      adminRequestStatus: doc.adminRequestStatus,
-      adminRequestRequestedAt: doc.adminRequestRequestedAt,
-    }));
+    const result = requests.map((doc) => {
+      const status = doc.approvalStatus || doc.adminRequestStatus || "APPROVED";
+      return {
+        id: String(doc._id),
+        fullName: doc.fullName,
+        email: doc.email,
+        role: doc.role,
+        adminRequestStatus: status as "PENDING" | "APPROVED" | "REJECTED",
+        adminRequestRequestedAt: doc.adminRequestRequestedAt || doc.createdAt,
+      };
+    });
 
     return Response.json(result);
   } catch (err) {
@@ -76,7 +84,7 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "User not found" }, { status: 404 });
     }
 
-    if (targetUser.adminRequestStatus !== "PENDING") {
+    if (targetUser.adminRequestStatus !== "PENDING" && targetUser.approvalStatus !== "PENDING") {
       return Response.json(
         { error: "This request has already been processed" },
         { status: 400 }
@@ -90,13 +98,23 @@ export async function POST(request: NextRequest) {
 
     if (action === "ACCEPT") {
       updates.role = "ADMIN";
+      updates.approvalStatus = "APPROVED";
       updates.adminRequestStatus = "APPROVED";
     } else {
       updates.role = "EMPLOYEE";
+      updates.approvalStatus = "REJECTED";
       updates.adminRequestStatus = "REJECTED";
     }
 
     await col.updateOne({ _id: new ObjectId(userId) }, { $set: updates });
+
+    // Write acceptance/rejection log into the activities collection
+    const activityCol = db.collection("activities");
+    await activityCol.insertOne({
+      action: action === "ACCEPT" ? "ADMIN_APPROVED" : "ADMIN_REJECTED",
+      description: `${user.fullName} ${action === "ACCEPT" ? "approved" : "rejected"} admin registration request for ${targetUser.fullName} (${targetUser.email})`,
+      createdAt: now,
+    });
 
     return Response.json({
       success: true,

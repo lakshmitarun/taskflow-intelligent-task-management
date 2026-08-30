@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { clsx } from "clsx";
+import { useAuthStore } from "@/store/auth-store";
 
 const priorityColors = {
   HIGH: "badge--high",
@@ -31,20 +32,28 @@ const priorityColors = {
 export default function DashboardPage() {
   const { tasks, fetchTasks, loading } = useTaskStore();
   const { employees, fetchEmployees } = useEmployeeStore();
+  const { user } = useAuthStore();
 
   useEffect(() => {
     fetchTasks();
     fetchEmployees();
   }, [fetchTasks, fetchEmployees]);
 
-  const total = tasks.length;
-  const todo = tasks.filter((t) => t.status === "TODO").length;
-  const inProgress = tasks.filter((t) => t.status === "IN_PROGRESS").length;
-  const completed = tasks.filter((t) => t.status === "COMPLETED").length;
-  const overdue = tasks.filter((t) => isOverdue(t)).length;
-  const recommended = getRecommendedTask(tasks);
+  const isEmployee = user?.role === "EMPLOYEE";
+  const currentEmployee = employees.find(e => e.email.toLowerCase() === user?.email?.toLowerCase());
 
-  const recentTasks = [...tasks]
+  const displayedTasks = isEmployee
+    ? tasks.filter((t) => t.assignedTo === currentEmployee?._id)
+    : tasks;
+
+  const total = displayedTasks.length;
+  const todo = displayedTasks.filter((t) => t.status === "TODO").length;
+  const inProgress = displayedTasks.filter((t) => t.status === "IN_PROGRESS").length;
+  const completed = displayedTasks.filter((t) => t.status === "COMPLETED").length;
+  const overdue = displayedTasks.filter((t) => isOverdue(t)).length;
+  const recommended = getRecommendedTask(displayedTasks);
+
+  const recentTasks = [...displayedTasks]
     .sort((a, b) => (b.smartScore ?? 0) - (a.smartScore ?? 0))
     .slice(0, 5);
 
@@ -108,11 +117,50 @@ export default function DashboardPage() {
             )}
           </div>
 
-          <div className="section-heading" style={{ marginTop: "24px" }}>
-            <Users size={15} />
-            Team Workload
-          </div>
-          <WorkloadOverview employees={employees} />
+          {!isEmployee ? (
+            <>
+              <div className="section-heading" style={{ marginTop: "24px" }}>
+                <Users size={15} />
+                Team Workload
+              </div>
+              <WorkloadOverview employees={employees} />
+            </>
+          ) : (
+            <>
+              <div className="section-heading" style={{ marginTop: "24px" }}>
+                <CheckCircle2 size={15} />
+                My Task Completion Summary
+              </div>
+              <div className="workload-panel" style={{ padding: "20px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px", fontSize: "14px" }}>
+                  <span>Task Completion Rate</span>
+                  <span style={{ fontWeight: 600 }}>{total === 0 ? 0 : Math.round((completed / total) * 100)}%</span>
+                </div>
+                <div style={{ height: "8px", background: "var(--border)", borderRadius: "4px", overflow: "hidden", marginBottom: "20px" }}>
+                  <div style={{
+                    width: `${total === 0 ? 0 : Math.round((completed / total) * 100)}%`,
+                    height: "100%",
+                    background: "var(--completed)",
+                    borderRadius: "4px"
+                  }} />
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px", textAlign: "center", fontSize: "13px" }}>
+                  <div style={{ background: "rgba(99, 102, 241, 0.05)", padding: "10px", borderRadius: "8px" }}>
+                    <div style={{ color: "var(--text-muted)", marginBottom: "4px" }}>To Do</div>
+                    <div style={{ fontSize: "16px", fontWeight: 700 }}>{todo}</div>
+                  </div>
+                  <div style={{ background: "rgba(245, 158, 11, 0.05)", padding: "10px", borderRadius: "8px" }}>
+                    <div style={{ color: "var(--text-muted)", marginBottom: "4px" }}>In Progress</div>
+                    <div style={{ fontSize: "16px", fontWeight: 700 }}>{inProgress}</div>
+                  </div>
+                  <div style={{ background: "rgba(16, 185, 129, 0.05)", padding: "10px", borderRadius: "8px" }}>
+                    <div style={{ color: "var(--text-muted)", marginBottom: "4px" }}>Completed</div>
+                    <div style={{ fontSize: "16px", fontWeight: 700 }}>{completed}</div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </>

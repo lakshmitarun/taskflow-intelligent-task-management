@@ -28,12 +28,19 @@ export async function GET() {
 
     const dbRole = userDoc.role as "ADMIN" | "EMPLOYEE";
     const dbStatus = userDoc.adminRequestStatus;
+    const approvalStatus = userDoc.approvalStatus || (dbStatus === "PENDING" ? "PENDING" : dbStatus === "REJECTED" ? "REJECTED" : "APPROVED");
+
+    if (approvalStatus === "PENDING" || approvalStatus === "REJECTED") {
+      cookieStore.delete("session");
+      return Response.json({ user: null });
+    }
 
     const latestUserPayload = {
       id: sessionUser.id,
       fullName: userDoc.fullName,
       email: userDoc.email,
       role: dbRole,
+      approvalStatus,
       adminRequestStatus: dbStatus,
     };
 

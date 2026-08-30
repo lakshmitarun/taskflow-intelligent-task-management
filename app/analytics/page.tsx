@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTaskStore } from "@/store/task-store";
 import { useEmployeeStore } from "@/store/employee-store";
 import { isOverdue } from "@/lib/priority-calculator";
@@ -13,7 +13,20 @@ import {
   Users,
   Zap,
   BarChart2,
+  Loader2,
 } from "lucide-react";
+import { useAuthStore } from "@/store/auth-store";
+import { useRouter } from "next/navigation";
+
+interface TeamMemberPerformance {
+  employeeId: string;
+  employeeName: string;
+  totalAssigned: number;
+  completed: number;
+  inProgress: number;
+  todo: number;
+  completionRate: number;
+}
 
 function ProgressBar({ value, max, cls }: { value: number; max: number; cls: string }) {
   const pct = max === 0 ? 0 : Math.min((value / max) * 100, 100);
@@ -27,11 +40,42 @@ function ProgressBar({ value, max, cls }: { value: number; max: number; cls: str
 export default function AnalyticsPage() {
   const { tasks, fetchTasks, loading } = useTaskStore();
   const { employees, fetchEmployees } = useEmployeeStore();
+  const { user } = useAuthStore();
+  const router = useRouter();
+  const [teamStats, setTeamStats] = useState<TeamMemberPerformance[]>([]);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  // Redirect non-admins
+  useEffect(() => {
+    if (user && user.role !== "ADMIN") {
+      router.push("/");
+    }
+  }, [user, router]);
 
   useEffect(() => {
     fetchTasks();
     fetchEmployees();
   }, [fetchTasks, fetchEmployees]);
+
+  useEffect(() => {
+    async function fetchTeamPerformance() {
+      try {
+        const res = await fetch("/api/analytics");
+        if (res.ok) {
+          const data = await res.json();
+          setTeamStats(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch team performance stats:", err);
+      } finally {
+        setStatsLoading(false);
+      }
+    }
+
+    if (user?.role === "ADMIN") {
+      fetchTeamPerformance();
+    }
+  }, [user]);
 
   const total = tasks.length;
   const completed = tasks.filter((t) => t.status === "COMPLETED").length;
@@ -170,6 +214,77 @@ export default function AnalyticsPage() {
             );
           })}
         </div>
+      </div>
+
+      {/* Team Member Performance Section */}
+      <div className="analytics-section" style={{ gridColumn: "span 2" }}>
+        <div className="analytics-section-header">
+          <Users size={16} />
+          <h2 className="analytics-section-title">Team Member Performance</h2>
+        </div>
+        
+        {statsLoading ? (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "40px", color: "var(--text-muted)", gap: "8px" }}>
+            <Loader2 size={18} className="spin" />
+            <span>Loading team statistics...</span>
+          </div>
+        ) : teamStats.length === 0 ? (
+          <p style={{ padding: "20px", color: "var(--text-muted)", textAlign: "center" }}>No team members found.</p>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table className="performance-table" style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px", textAlign: "left", marginTop: "12px" }}>
+              <thead>
+                <tr style={{ borderBottom: "1px solid var(--border)", paddingBottom: "8px", opacity: 0.8 }}>
+                  <th style={{ padding: "12px 8px" }}>Team Member</th>
+                  <th style={{ padding: "12px 8px" }}>Total Tasks</th>
+                  <th style={{ padding: "12px 8px" }}>Completed</th>
+                  <th style={{ padding: "12px 8px" }}>In Progress</th>
+                  <th style={{ padding: "12px 8px" }}>To Do</th>
+                  <th style={{ padding: "12px 8px", width: "250px" }}>Completion Rate</th>
+                </tr>
+              </thead>
+              <tbody>
+                {teamStats.map((member) => (
+                  <tr key={member.employeeId} style={{ borderBottom: "1px solid var(--border)", transition: "background 0.2s" }}>
+                    <td style={{ padding: "12px 8px", fontWeight: 500 }}>{member.employeeName}</td>
+                    <td style={{ padding: "12px 8px" }}>{member.totalAssigned}</td>
+                    <td style={{ padding: "12px 8px" }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                        <span className="status-dot" style={{ display: "inline-block", background: "var(--completed)" }} />
+                        {member.completed}
+                      </span>
+                    </td>
+                    <td style={{ padding: "12px 8px" }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                        <span className="status-dot" style={{ display: "inline-block", background: "var(--progress)" }} />
+                        {member.inProgress}
+                      </span>
+                    </td>
+                    <td style={{ padding: "12px 8px" }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                        <span className="status-dot" style={{ display: "inline-block", background: "var(--text-muted)" }} />
+                        {member.todo}
+                      </span>
+                    </td>
+                    <td style={{ padding: "12px 8px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <span style={{ fontWeight: 600, minWidth: "35px" }}>{member.completionRate}%</span>
+                        <div style={{ flex: 1, height: "6px", background: "var(--border)", borderRadius: "3px", overflow: "hidden" }}>
+                          <div style={{
+                            width: `${member.completionRate}%`,
+                            height: "100%",
+                            background: member.completionRate >= 70 ? "var(--completed)" : member.completionRate >= 40 ? "var(--medium)" : "var(--overdue)",
+                            borderRadius: "3px"
+                          }} />
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {loading && tasks.length === 0 && (
