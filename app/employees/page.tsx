@@ -22,7 +22,7 @@ export default function EmployeesPage() {
       {/* Page header row */}
       <div className="page-action-bar">
         <div className="page-action-bar__left">
-          <Users size={18} style={{ color: "var(--grad-start)" }} />
+          <Users size={18} style={{ color: "var(--primary)" }} />
           <span className="page-action-bar__label">Team Members</span>
           {error && <span className="error-chip">{error}</span>}
         </div>

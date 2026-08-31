@@ -123,7 +123,7 @@ export default function ApprovalsPage() {
       {/* Header action bar */}
       <div className="page-action-bar">
         <div className="page-action-bar__left">
-          <ShieldCheck size={18} style={{ color: "var(--grad-start)" }} />
+          <ShieldCheck size={18} style={{ color: "var(--primary)" }} />
           <span className="page-action-bar__label">Admin Registrations</span>
           {error && (
             <div className="error-chip" style={{ display: "flex", alignItems: "center", gap: "4px" }}>
@@ -158,7 +158,7 @@ export default function ApprovalsPage() {
       <div className="approvals-grid">
         {loading ? (
           <div className="empty-state" style={{ padding: "60px" }}>
-            <Loader2 size={32} className="spin" style={{ color: "var(--grad-start)", marginBottom: "12px" }} />
+            <Loader2 size={32} className="spin" style={{ color: "var(--primary)", marginBottom: "12px" }} />
             <p style={{ color: "var(--text-secondary)" }}>Loading registration requests...</p>
           </div>
         ) : displayedRequests.length === 0 ? (
@@ -188,11 +188,11 @@ export default function ApprovalsPage() {
                 <div className="approval-card__name">{req.fullName}</div>
                 <div className="approval-card__meta">
                   <div className="approval-card__meta-item">
-                    <Mail size={14} style={{ color: "var(--grad-start)" }} />
+                    <Mail size={14} style={{ color: "var(--primary)" }} />
                     <span>{req.email}</span>
                   </div>
                   <div className="approval-card__meta-item">
-                    <Calendar size={14} style={{ color: "var(--grad-mid)" }} />
+                    <Calendar size={14} style={{ color: "var(--text-secondary)" }} />
                     <span>Requested: {formatDate(req.adminRequestRequestedAt)}</span>
                   </div>
                 </div>

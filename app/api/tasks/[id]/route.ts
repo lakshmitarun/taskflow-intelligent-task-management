@@ -1,15 +1,42 @@
 import { NextRequest } from "next/server";
-import { getTasksCollection } from "@/lib/mongodb";
+import { getTasksCollection, getEmployeesCollection } from "@/lib/mongodb";
 import { calculateSmartScore } from "@/lib/priority-calculator";
-import { Task } from "@/types/task";
+import { Task, normalizeAssignedTo } from "@/types/task";
 import { ObjectId } from "mongodb";
 import { getCurrentUser } from "@/lib/auth";
 
 function docToTask(doc: Record<string, unknown>): Task {
   const { _id, ...rest } = doc;
-  const task = { ...rest, id: String(_id) } as Task;
+  const task = {
+    ...rest,
+    id: String(_id),
+    assignedTo: normalizeAssignedTo(doc.assignedTo),
+  } as Task;
   task.smartScore = calculateSmartScore(task);
   return task;
+}
+
+async function isUserAssignedToTaskDoc(
+  user: { id: string; email: string },
+  taskDoc: Record<string, unknown>
+): Promise<boolean> {
+  const assignees = normalizeAssignedTo(taskDoc.assignedTo);
+  if (assignees.length === 0) return false;
+
+  const userEmailLower = user.email.toLowerCase();
+
+  const empCol = await getEmployeesCollection();
+  const empDoc = await empCol.findOne({ email: userEmailLower });
+  const empIdStr = empDoc ? String(empDoc._id) : null;
+
+  const candidateIds = [user.id, userEmailLower];
+  if (empIdStr) candidateIds.push(empIdStr);
+
+  return assignees.some(
+    (assigneeId) =>
+      candidateIds.includes(assigneeId) ||
+      candidateIds.includes(assigneeId.toLowerCase())
+  );
 }
 
 // GET /api/tasks/[id]
@@ -54,6 +81,40 @@ export async function PATCH(
       return Response.json({ error: "Task not found" }, { status: 404 });
     }
 
+    const isAdmin = user.role === "ADMIN";
+    const isAssigned = await isUserAssignedToTaskDoc(
+      user,
+      existingTask as Record<string, unknown>
+    );
+
+    // Rule 1: Non-admin and non-assigned employee cannot edit task -> 403
+    if (!isAdmin && !isAssigned) {
+      return Response.json(
+        { error: "Forbidden: You are not assigned to this task" },
+        { status: 403 }
+      );
+    }
+
+    // Rule 2: Only Admin can change task assignment (reassign / add / remove employees)
+    if (!isAdmin && updates.assignedTo !== undefined) {
+      const existingAssignees = normalizeAssignedTo(existingTask.assignedTo).sort();
+      const newAssignees = normalizeAssignedTo(updates.assignedTo).sort();
+
+      const assignmentChanged =
+        existingAssignees.length !== newAssignees.length ||
+        existingAssignees.some((val, idx) => val !== newAssignees[idx]);
+
+      if (assignmentChanged) {
+        return Response.json(
+          { error: "Forbidden: Only administrators can modify task assignments" },
+          { status: 403 }
+        );
+      }
+    }
+
+    if (updates.assignedTo !== undefined) {
+      updates.assignedTo = normalizeAssignedTo(updates.assignedTo);
+    }
 
     const patch = { ...updates, updatedAt: new Date().toISOString() };
     const result = await col.findOneAndUpdate(

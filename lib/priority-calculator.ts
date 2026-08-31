@@ -14,7 +14,7 @@ export function calculateSmartScore(task: Task): number {
   const deadline = startOfDay(parseISO(task.deadline));
   const daysUntilDeadline = differenceInDays(deadline, today);
 
-  if (daysUntilDeadline <= 0) score += 40; // today or overdue
+  if (isOverdue(task) || daysUntilDeadline <= 0) score += 40; // today or overdue
   else if (daysUntilDeadline <= 2) score += 30;
   else if (daysUntilDeadline <= 7) score += 15;
 
@@ -37,12 +37,40 @@ export function getRecommendedTask(tasks: Task[]): Task | null {
 
 export function isOverdue(task: Task): boolean {
   if (task.status === "COMPLETED") return false;
+
+  // 1. Calendar deadline check
   const today = startOfDay(new Date());
   const deadline = startOfDay(parseISO(task.deadline));
-  return differenceInDays(deadline, today) < 0;
+  if (differenceInDays(deadline, today) < 0) return true;
+
+  // 2. Estimated hours expiration from creation time
+  if (task.createdAt && typeof task.estimatedHours === "number" && task.estimatedHours > 0) {
+    const createdTime = new Date(task.createdAt).getTime();
+    if (!isNaN(createdTime)) {
+      const expirationTime = createdTime + task.estimatedHours * 60 * 60 * 1000;
+      if (Date.now() > expirationTime) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
 
-export function getDeadlineLabel(deadline: string): string {
+export function getDeadlineLabel(taskOrDeadline: Task | string): string {
+  if (typeof taskOrDeadline === "object" && taskOrDeadline !== null) {
+    const task = taskOrDeadline;
+    if (isOverdue(task)) {
+      const today = startOfDay(new Date());
+      const dl = startOfDay(parseISO(task.deadline));
+      const diff = differenceInDays(dl, today);
+      if (diff < 0) return `${Math.abs(diff)}d overdue`;
+      return "Expired";
+    }
+    return getDeadlineLabel(task.deadline);
+  }
+
+  const deadline = taskOrDeadline;
   const today = startOfDay(new Date());
   const dl = startOfDay(parseISO(deadline));
   const diff = differenceInDays(dl, today);
@@ -52,3 +80,4 @@ export function getDeadlineLabel(deadline: string): string {
   if (diff === 1) return "Due tomorrow";
   return `${diff}d left`;
 }
+

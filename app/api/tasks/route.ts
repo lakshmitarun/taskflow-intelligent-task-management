@@ -1,13 +1,16 @@
 import { NextRequest } from "next/server";
 import { getTasksCollection } from "@/lib/mongodb";
 import { calculateSmartScore } from "@/lib/priority-calculator";
-import { Task } from "@/types/task";
-import { ObjectId } from "mongodb";
+import { Task, normalizeAssignedTo } from "@/types/task";
 import { getCurrentUser } from "@/lib/auth";
 
 function docToTask(doc: Record<string, unknown>): Task {
   const { _id, ...rest } = doc;
-  const task = { ...rest, id: String(_id) } as Task;
+  const task = {
+    ...rest,
+    id: String(_id),
+    assignedTo: normalizeAssignedTo(doc.assignedTo),
+  } as Task;
   task.smartScore = calculateSmartScore(task);
   return task;
 }
@@ -48,7 +51,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-
     const now = new Date().toISOString();
     const doc = {
       title: body.title.trim(),
@@ -57,7 +59,7 @@ export async function POST(request: NextRequest) {
       status: body.status ?? "TODO",
       deadline: body.deadline,
       estimatedHours: Number(body.estimatedHours),
-      assignedTo: body.assignedTo ?? null,
+      assignedTo: normalizeAssignedTo(body.assignedTo),
       createdAt: now,
       updatedAt: now,
     };
@@ -76,3 +78,4 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Failed to create task" }, { status: 500 });
   }
 }
+

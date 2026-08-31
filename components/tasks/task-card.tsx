@@ -1,6 +1,6 @@
 "use client";
 
-import { Task, TaskStatus } from "@/types/task";
+import { Task, TaskStatus, normalizeAssignedTo } from "@/types/task";
 import { useTaskStore } from "@/store/task-store";
 import { useEmployeeStore } from "@/store/employee-store";
 import { useAuthStore } from "@/store/auth-store";
@@ -38,13 +38,28 @@ export function TaskCard({ task, onEdit }: TaskCardProps) {
 
   const priority = priorityConfig[task.priority];
   const status = statusConfig[task.status];
-  const deadlineLabel = getDeadlineLabel(task.deadline);
+  const deadlineLabel = getDeadlineLabel(task);
   const overdue = isOverdue(task);
   const next = nextStatus[task.status];
 
-  const assignedEmployee = task.assignedTo
-    ? employees.find((e) => e._id === task.assignedTo)
-    : null;
+  const assignedIds = normalizeAssignedTo(task.assignedTo);
+  const assignedEmployees = employees.filter((e) => assignedIds.includes(e._id));
+
+  const isAdmin = user?.role === "ADMIN";
+  const currentEmp = employees.find(
+    (e) => e.email.toLowerCase() === user?.email?.toLowerCase()
+  );
+  const currentEmpId = currentEmp?._id;
+
+  const isAssigned = Boolean(
+    (currentEmpId && assignedIds.includes(currentEmpId)) ||
+      (user?.id && assignedIds.includes(user.id)) ||
+      (user?.email &&
+        assignedIds.some((id) => id.toLowerCase() === user.email.toLowerCase()))
+  );
+
+  const canEdit = isAdmin || isAssigned;
+  const canDelete = isAdmin;
 
   return (
     <div className={clsx("task-card", task.status === "COMPLETED" && "task-card--completed")}>
@@ -73,17 +88,17 @@ export function TaskCard({ task, onEdit }: TaskCardProps) {
           {deadlineLabel}
         </span>
         <span className="hours-chip">~{task.estimatedHours}h</span>
-        {assignedEmployee && (
-          <span className="assigned-chip">
+        {assignedEmployees.length > 0 && (
+          <span className="assigned-chip" title={assignedEmployees.map((e) => e.name).join(", ")}>
             <UserCircle size={12} />
-            {assignedEmployee.name}
+            {assignedEmployees.map((e) => e.name).join(", ")}
           </span>
         )}
       </div>
 
       {/* Actions */}
       <div className="task-card__actions">
-        {next && (
+        {canEdit && next ? (
           <button
             className="btn btn--advance"
             onClick={() => updateStatus(task.id, next)}
@@ -92,12 +107,18 @@ export function TaskCard({ task, onEdit }: TaskCardProps) {
             <ChevronRight size={14} />
             {statusConfig[next].label}
           </button>
+        ) : (
+          <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>
+            {canEdit ? (task.status === "COMPLETED" ? "Completed" : "") : "Read only"}
+          </span>
         )}
         <div className="task-card__icon-actions">
-          <button className="icon-btn" onClick={() => onEdit(task)} aria-label="Edit task">
-            <Pencil size={15} />
-          </button>
-          {user?.role === "ADMIN" && (
+          {canEdit && (
+            <button className="icon-btn" onClick={() => onEdit(task)} aria-label="Edit task">
+              <Pencil size={15} />
+            </button>
+          )}
+          {canDelete && (
             <button
               className="icon-btn icon-btn--danger"
               onClick={() => deleteTask(task.id)}

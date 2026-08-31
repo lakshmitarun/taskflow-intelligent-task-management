@@ -24,18 +24,18 @@ async function logActivity(payload: {
   description: string;
   taskId?: string;
   taskTitle?: string;
-  assignedTo?: string | null;
+  assignedTo?: string[];
 }) {
   try {
     let employeeId: string | null = null;
     let employeeName: string | null = null;
 
-    if (payload.assignedTo) {
+    if (payload.assignedTo && payload.assignedTo.length > 0) {
       const { employees } = useEmployeeStore.getState();
-      const emp = employees.find((e) => e._id === payload.assignedTo);
-      if (emp) {
-        employeeId = emp.email; // id means email id who keept that task
-        employeeName = emp.name; // name means name
+      const assignedEmps = employees.filter((e) => payload.assignedTo?.includes(e._id));
+      if (assignedEmps.length > 0) {
+        employeeId = assignedEmps.map((e) => e.email).join(", ");
+        employeeName = assignedEmps.map((e) => e.name).join(", ");
       }
     }
 

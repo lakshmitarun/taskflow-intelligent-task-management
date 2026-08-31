@@ -29,6 +29,17 @@ export async function POST(request: NextRequest) {
     const passwordHash = hashPassword(password);
     const now = new Date().toISOString();
     const isRequestingAdmin = role === "ADMIN";
+
+    if (isRequestingAdmin) {
+      const existingAdmin = await col.findOne({ role: "ADMIN" });
+      if (existingAdmin) {
+        return Response.json(
+          { error: "An administrator already exists. Please register as an employee." },
+          { status: 400 }
+        );
+      }
+    }
+
     let employeeId: string | undefined = undefined;
 
     if (!isRequestingAdmin) {

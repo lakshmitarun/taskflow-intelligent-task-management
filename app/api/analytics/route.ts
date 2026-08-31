@@ -1,5 +1,6 @@
 import { getEmployeesCollection, getTasksCollection } from "@/lib/mongodb";
 import { getCurrentUser } from "@/lib/auth";
+import { normalizeAssignedTo } from "@/types/task";
 
 export async function GET() {
   try {
@@ -24,7 +25,9 @@ export async function GET() {
     // Calculate metrics per employee
     const teamPerformance = employees.map((emp) => {
       const empIdStr = String(emp._id);
-      const empTasks = tasks.filter((t) => t.assignedTo === empIdStr);
+      const empTasks = tasks.filter((t) =>
+        normalizeAssignedTo(t.assignedTo).includes(empIdStr)
+      );
 
       const totalAssigned = empTasks.length;
       const completed = empTasks.filter((t) => t.status === "COMPLETED").length;

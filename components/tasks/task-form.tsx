@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Task, Priority, TaskStatus } from "@/types/task";
+import { Task, Priority, TaskStatus, normalizeAssignedTo } from "@/types/task";
 import { useTaskStore } from "@/store/task-store";
 import { useEmployeeStore } from "@/store/employee-store";
-import { useAuthStore } from "@/store/auth-store";
 import { format } from "date-fns";
 import { X } from "lucide-react";
 
@@ -20,13 +19,16 @@ const defaultForm = {
   deadline: format(new Date(), "yyyy-MM-dd"),
   estimatedHours: 1,
   status: "TODO" as TaskStatus,
-  assignedTo: "",
+  assignedTo: [] as string[],
 };
+
+import { useAuthStore } from "@/store/auth-store";
 
 export function TaskForm({ task, onClose }: TaskFormProps) {
   const { addTask, updateTask } = useTaskStore();
   const { employees, fetchEmployees } = useEmployeeStore();
   const { user } = useAuthStore();
+  const isAdmin = user?.role === "ADMIN";
   const [form, setForm] = useState(defaultForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
@@ -41,7 +43,7 @@ export function TaskForm({ task, onClose }: TaskFormProps) {
         deadline: task.deadline,
         estimatedHours: task.estimatedHours,
         status: task.status,
-        assignedTo: task.assignedTo ?? "",
+        assignedTo: normalizeAssignedTo(task.assignedTo),
       });
     }
   }, [task, fetchEmployees]);
@@ -57,6 +59,20 @@ export function TaskForm({ task, onClose }: TaskFormProps) {
     return errs;
   }
 
+  function addEmployee(id: string) {
+    if (!id) return;
+    if (!form.assignedTo.includes(id)) {
+      setForm((f) => ({ ...f, assignedTo: [...f.assignedTo, id] }));
+    }
+  }
+
+  function removeEmployee(id: string) {
+    setForm((f) => ({
+      ...f,
+      assignedTo: f.assignedTo.filter((empId) => empId !== id),
+    }));
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const errs = validate();
@@ -67,7 +83,7 @@ export function TaskForm({ task, onClose }: TaskFormProps) {
     const payload = {
       ...form,
       estimatedHours: hours,
-      assignedTo: form.assignedTo || undefined,
+      assignedTo: form.assignedTo,
     };
 
     if (task) {
@@ -96,6 +112,8 @@ export function TaskForm({ task, onClose }: TaskFormProps) {
       },
     };
   }
+
+  const unassignedEmployees = employees.filter((emp) => !form.assignedTo.includes(emp._id));
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -173,20 +191,80 @@ export function TaskForm({ task, onClose }: TaskFormProps) {
             </div>
           </div>
 
-          {/* Assign To */}
+          {/* Assign To (Multi-select) */}
           <div className="form-group">
-            <label className="form-label">Assign To</label>
-            <select
-              className="form-input form-select"
-              {...field("assignedTo")}
-            >
-              <option value="">— Unassigned —</option>
-              {employees.map((emp) => (
-                <option key={emp._id} value={emp._id}>
-                  {emp.name} ({emp.role})
-                </option>
-              ))}
-            </select>
+            <label className="form-label">Assigned Employees</label>
+
+            {/* Chips for selected employees */}
+            <div className="multi-assignee-chips" style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "8px" }}>
+              {form.assignedTo.length === 0 ? (
+                <span style={{ fontSize: "13px", color: "var(--text-muted)", fontStyle: "italic" }}>
+                  No team members assigned yet
+                </span>
+              ) : (
+                form.assignedTo.map((empId) => {
+                  const emp = employees.find((e) => e._id === empId);
+                  if (!emp) return null;
+                  return (
+                    <span
+                      key={empId}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        padding: "4px 10px",
+                        borderRadius: "9999px",
+                        background: "var(--primary-subtle)",
+                        color: "var(--primary)",
+                        fontSize: "12px",
+                        fontWeight: 600,
+                        border: "1px solid var(--primary-border)"
+                      }}
+                    >
+                      <span>{emp.name} ({emp.role})</span>
+                      {isAdmin && (
+                        <button
+                          type="button"
+                          onClick={() => removeEmployee(empId)}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            background: "none",
+                            border: "none",
+                            color: "var(--primary)",
+                            cursor: "pointer",
+                            padding: "0"
+                          }}
+                          title="Remove employee"
+                        >
+                          <X size={12} />
+                        </button>
+                      )}
+                    </span>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Select dropdown to add employee (Admin only) */}
+            {isAdmin && (
+              <select
+                className="form-input form-select"
+                value=""
+                onChange={(e) => {
+                  addEmployee(e.target.value);
+                  e.target.value = "";
+                }}
+              >
+                <option value="">+ Add Team Member…</option>
+                {unassignedEmployees.map((emp) => (
+                  <option key={emp._id} value={emp._id}>
+                    {emp.name} ({emp.role})
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
           {/* Actions */}
@@ -201,3 +279,4 @@ export function TaskForm({ task, onClose }: TaskFormProps) {
     </div>
   );
 }
+

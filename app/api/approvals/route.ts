@@ -19,10 +19,8 @@ export async function GET() {
 
     const requests = await col
       .find({
-        $or: [
-          { adminRequestStatus: { $exists: true } },
-          { approvalStatus: { $exists: true } }
-        ]
+        adminRequestStatus: { $in: ["PENDING", "REJECTED", "APPROVED"] },
+        email: { $ne: "lakshmitaruntarun@gmail.com" }
       })
       .sort({ adminRequestRequestedAt: -1 })
       .toArray();
@@ -97,6 +95,15 @@ export async function POST(request: NextRequest) {
     };
 
     if (action === "ACCEPT") {
+      if (targetUser.email?.toLowerCase() !== "lakshmitaruntarun@gmail.com") {
+        const existingAdmin = await col.findOne({ role: "ADMIN" });
+        if (existingAdmin) {
+          return Response.json(
+            { error: "An administrator already exists. Additional admin accounts cannot be approved." },
+            { status: 400 }
+          );
+        }
+      }
       updates.role = "ADMIN";
       updates.approvalStatus = "APPROVED";
       updates.adminRequestStatus = "APPROVED";

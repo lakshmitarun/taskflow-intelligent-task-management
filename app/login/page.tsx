@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useAuthStore } from "@/store/auth-store";
 import { useRouter } from "next/navigation";
-import { Mail, Lock, AlertCircle, Loader2, Zap } from "lucide-react";
+import { Mail, Lock, AlertCircle, Loader2, ClipboardCheck } from "lucide-react";
 import Link from "next/link";
 
 export default function LoginPage() {
@@ -37,7 +37,7 @@ export default function LoginPage() {
         {/* Brand */}
         <div className="login-brand">
           <div className="brand-icon login-brand-icon">
-            <Zap size={28} />
+            <ClipboardCheck size={26} />
           </div>
           <span className="brand-name login-brand-name">TaskFlow</span>
         </div>

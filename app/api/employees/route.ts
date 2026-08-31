@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { getEmployeesCollection, getTasksCollection } from "@/lib/mongodb";
-import { ObjectId } from "mongodb";
 import { Employee } from "@/types/employee";
+import { normalizeAssignedTo } from "@/types/task";
 import { getCurrentUser } from "@/lib/auth";
 
 function docToEmployee(
@@ -24,13 +24,15 @@ export async function GET() {
 
     // Count active tasks per employee
     const activeTasks = await taskCol
-      .find({ status: { $ne: "COMPLETED" }, assignedTo: { $ne: null } })
+      .find({ status: { $ne: "COMPLETED" } })
       .toArray();
 
     const taskCountMap: Record<string, number> = {};
     for (const t of activeTasks) {
-      const key = String(t.assignedTo);
-      taskCountMap[key] = (taskCountMap[key] ?? 0) + 1;
+      const assignees = normalizeAssignedTo(t.assignedTo);
+      for (const empId of assignees) {
+        taskCountMap[empId] = (taskCountMap[empId] ?? 0) + 1;
+      }
     }
 
     const result = employees.map((doc) => {

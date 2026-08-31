@@ -1,11 +1,13 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
-import { Moon, Sun, User, LogOut, Menu, Clock } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Moon, Sun, Menu, Clock, Bell } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/auth-store";
 import { useUIStore } from "@/store/ui-store";
+import { useTaskStore } from "@/store/task-store";
+import { isOverdue, getDeadlineLabel } from "@/lib/priority-calculator";
 
 const pageTitles: Record<string, { title: string; subtitle: string }> = {
   "/": { title: "Dashboard", subtitle: "Overview of your work" },
@@ -19,11 +21,11 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
 
 export function Header() {
   const pathname = usePathname();
-  const router = useRouter();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const { user, init, logout } = useAuthStore();
+  const { user, init } = useAuthStore();
   const { toggleSidebar } = useUIStore();
+  const { tasks } = useTaskStore();
 
   useEffect(() => {
     setMounted(true);
@@ -32,11 +34,18 @@ export function Header() {
 
   const page = pageTitles[pathname] ?? { title: "TaskFlow", subtitle: "" };
 
-  async function handleLogout() {
-    await logout();
-    router.push("/login");
-    router.refresh();
-  }
+  // Calculate real notification count (overdue tasks or tasks due today/tomorrow)
+  const notificationCount = tasks.filter((t) => {
+    if (t.status === "COMPLETED") return false;
+    const label = getDeadlineLabel(t);
+    return (
+      isOverdue(t) ||
+      label === "Due today" ||
+      label === "Due tomorrow" ||
+      label.includes("overdue") ||
+      label === "Expired"
+    );
+  }).length;
 
   // Do not render full header on login/register pages
   const isAuthPage = pathname === "/login" || pathname === "/register";
@@ -60,35 +69,44 @@ export function Header() {
             <p className="header-subtitle">{page.subtitle}</p>
           </div>
         </div>
+
         <div className="header-right">
           {mounted && !isAuthPage && (
             <>
+              {/* Notification icon with dynamic count */}
+              <button
+                className="icon-btn header-notification-btn"
+                aria-label="Notifications"
+                title="Notifications"
+              >
+                <Bell size={18} />
+                {notificationCount > 0 && (
+                  <span className="notification-badge">{notificationCount}</span>
+                )}
+              </button>
+
+              {/* Theme Toggle Button */}
               <button
                 className="icon-btn"
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                 aria-label="Toggle dark mode"
+                title="Toggle Theme"
               >
                 {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
               </button>
 
+              {/* User Profile */}
               {user && (
-                <div className="user-profile-header">
-                  <span className="user-name-label">{user.fullName}</span>
-                  <span className="user-role-badge">{user.role}</span>
-                  <div className="avatar" title={`${user.fullName} (${user.role})`}>
+                <div className="header-user-profile">
+                  <div className="header-avatar">
                     {user.fullName.charAt(0).toUpperCase()}
                   </div>
+                  <span className="header-user-name">{user.fullName}</span>
+                  <span className="header-user-role">
+                    {user.role === "ADMIN" ? "Admin" : "Employee"}
+                  </span>
                 </div>
               )}
-
-              <button
-                className="icon-btn icon-btn--danger"
-                onClick={handleLogout}
-                aria-label="Logout"
-                title="Sign Out"
-              >
-                <LogOut size={18} />
-              </button>
             </>
           )}
         </div>
@@ -98,7 +116,7 @@ export function Header() {
         <div className="pending-admin-banner">
           <span className="pending-admin-banner__badge">PENDING REVIEW</span>
           <div className="pending-admin-banner__content">
-            <Clock size={14} style={{ color: "var(--medium)" }} />
+            <Clock size={14} style={{ color: "var(--todo)" }} />
             <span>Your request for Administrator access is pending approval. You are currently browsing with Employee permissions.</span>
           </div>
         </div>
@@ -106,3 +124,6 @@ export function Header() {
     </>
   );
 }
+
+
+

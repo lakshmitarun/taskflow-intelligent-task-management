@@ -8,6 +8,8 @@ import { EmployeeForm } from "./employee-form";
 import { Pencil, Trash2, Mail, Briefcase, Building2, Users } from "lucide-react";
 import { clsx } from "clsx";
 
+import { useUIStore } from "@/store/ui-store";
+
 const workloadConfig = {
   LOW: { label: "Low Workload", cls: "workload--low" },
   MEDIUM: { label: "Medium Workload", cls: "workload--medium" },
@@ -16,16 +18,32 @@ const workloadConfig = {
 
 export function EmployeeList() {
   const { employees, deleteEmployee } = useEmployeeStore();
+  const { searchQuery } = useUIStore();
   const [editEmployee, setEditEmployee] = useState<Employee | null>(null);
   const { user } = useAuthStore();
 
-  if (employees.length === 0) {
+  const filteredEmployees = employees.filter((emp) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase().trim();
+    return (
+      emp.name.toLowerCase().includes(q) ||
+      emp.email.toLowerCase().includes(q) ||
+      emp.role.toLowerCase().includes(q) ||
+      (emp.department ?? "").toLowerCase().includes(q)
+    );
+  });
+
+  if (filteredEmployees.length === 0) {
     return (
       <div className="empty-state">
         <Users size={48} className="empty-state__icon" />
-        <h3 className="empty-state__title">No team members yet</h3>
+        <h3 className="empty-state__title">
+          {employees.length === 0 ? "No team members yet" : "No matching team members"}
+        </h3>
         <p className="empty-state__desc">
-          Add your first team member to start assigning tasks.
+          {employees.length === 0
+            ? "Add your first team member to start assigning tasks."
+            : "Try adjusting your search terms."}
         </p>
         {editEmployee && (
           <EmployeeForm
@@ -40,7 +58,7 @@ export function EmployeeList() {
   return (
     <>
       <div className="employee-grid">
-        {employees.map((emp) => {
+        {filteredEmployees.map((emp) => {
           const level = getWorkloadLevel(emp.activeTaskCount ?? 0);
           const wl = workloadConfig[level];
           return (

@@ -9,8 +9,19 @@ export interface Task {
   status: TaskStatus;
   deadline: string; // ISO date string YYYY-MM-DD
   estimatedHours: number;
-  assignedTo?: string; // Employee _id reference
+  assignedTo?: string[]; // Array of Employee _id references
   createdAt: string; // ISO timestamp
   updatedAt?: string; // ISO timestamp
   smartScore?: number;
 }
+
+export function normalizeAssignedTo(assignedTo: unknown): string[] {
+  if (Array.isArray(assignedTo)) {
+    return (assignedTo as string[]).filter((id) => typeof id === "string" && id.trim().length > 0);
+  }
+  if (typeof assignedTo === "string" && assignedTo.trim().length > 0) {
+    return [assignedTo.trim()];
+  }
+  return [];
+}
+

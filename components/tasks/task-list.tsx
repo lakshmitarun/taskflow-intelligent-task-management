@@ -3,19 +3,21 @@
 import { useEffect, useState } from "react";
 import { useTaskStore } from "@/store/task-store";
 import { useEmployeeStore } from "@/store/employee-store";
-import { Task, TaskStatus, Priority } from "@/types/task";
+import { Task, TaskStatus, Priority, normalizeAssignedTo } from "@/types/task";
 import { TaskCard } from "./task-card";
 import { TaskForm } from "./task-form";
 import { SlidersHorizontal, ClipboardList, Search, RefreshCw } from "lucide-react";
 
+import { useUIStore } from "@/store/ui-store";
+
 export function TaskList() {
   const { tasks, fetchTasks, loading, error } = useTaskStore();
   const { employees } = useEmployeeStore();
+  const { searchQuery, setSearchQuery } = useUIStore();
   const [editTask, setEditTask] = useState<Task | null>(null);
   const [filterStatus, setFilterStatus] = useState<TaskStatus | "ALL">("ALL");
   const [filterPriority, setFilterPriority] = useState<Priority | "ALL">("ALL");
   const [filterEmployee, setFilterEmployee] = useState<string>("ALL");
-  const [search, setSearch] = useState("");
 
   useEffect(() => {
     fetchTasks();
@@ -24,10 +26,15 @@ export function TaskList() {
   const filtered = tasks
     .filter((t) => filterStatus === "ALL" || t.status === filterStatus)
     .filter((t) => filterPriority === "ALL" || t.priority === filterPriority)
-    .filter((t) => filterEmployee === "ALL" || t.assignedTo === filterEmployee)
     .filter((t) => {
-      if (!search.trim()) return true;
-      const q = search.toLowerCase();
+      if (filterEmployee === "ALL") return true;
+      const assignees = normalizeAssignedTo(t.assignedTo);
+      if (filterEmployee === "") return assignees.length === 0;
+      return assignees.includes(filterEmployee);
+    })
+    .filter((t) => {
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase().trim();
       return (
         t.title.toLowerCase().includes(q) ||
         (t.description ?? "").toLowerCase().includes(q)
@@ -49,8 +56,8 @@ export function TaskList() {
           <input
             className="search-input"
             placeholder="Search tasks…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             aria-label="Search tasks"
           />
         </div>

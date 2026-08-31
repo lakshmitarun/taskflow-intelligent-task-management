@@ -1,15 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   ListTodo,
   Users,
   BarChart2,
-  Zap,
   X,
   ShieldCheck,
+  ClipboardCheck,
+  LogOut,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { useAuthStore } from "@/store/auth-store";
@@ -25,19 +26,26 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { user } = useAuthStore();
+  const router = useRouter();
+  const { user, logout } = useAuthStore();
   const { isSidebarOpen, setSidebarOpen } = useUIStore();
 
   const filteredItems = navItems.filter(
     (item) => !item.roles || (user && item.roles.includes(user.role))
   );
 
+  async function handleLogout() {
+    await logout();
+    router.push("/login");
+    router.refresh();
+  }
+
   return (
     <aside className={clsx("sidebar", isSidebarOpen && "sidebar--open")}>
       {/* Brand */}
       <div className="sidebar-brand">
         <div className="brand-icon">
-          <Zap size={20} />
+          <ClipboardCheck size={22} />
         </div>
         <span className="brand-name">TaskFlow</span>
         
@@ -53,7 +61,7 @@ export function Sidebar() {
 
       {/* Nav */}
       <nav className="sidebar-nav">
-        <p className="nav-section-label">Menu</p>
+        <p className="nav-section-label">MENU</p>
         {filteredItems.map(({ href, icon: Icon, label }) => {
           const active = pathname === href;
           return (
@@ -70,11 +78,32 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Footer tagline */}
-      <div className="sidebar-footer">
-        <p className="tagline">Work Smarter.</p>
-        <p className="tagline">Prioritize Better.</p>
+      {/* Bottom Controls */}
+      <div className="sidebar-bottom-controls">
+        {/* User profile section */}
+        {user && (
+          <div className="sidebar-user-box">
+            <div className="sidebar-user-avatar">
+              {user.fullName.charAt(0).toUpperCase()}
+            </div>
+            <div className="sidebar-user-info">
+              <span className="sidebar-user-name" title={user.fullName}>{user.fullName}</span>
+              <span className="sidebar-user-role">{user.role === "ADMIN" ? "Admin" : "Employee"}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Logout */}
+        <button
+          className="sidebar-logout-btn"
+          onClick={handleLogout}
+        >
+          <LogOut size={16} />
+          <span>Logout</span>
+        </button>
       </div>
     </aside>
   );
 }
+
+
