@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { verifySession } from "@/lib/auth";
+import { verifyEdgeSession } from "@/lib/auth-edge";
 
 export async function middleware(request: NextRequest) {
   const session = request.cookies.get("session")?.value;
@@ -9,7 +9,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  const payload = await verifySession(session);
+  const payload = await verifyEdgeSession(session);
   if (!payload) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
