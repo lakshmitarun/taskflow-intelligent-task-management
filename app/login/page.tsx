@@ -100,7 +100,7 @@ export default function LoginPage() {
         </form>
 
         <p className="login-footer-text">
-          Don't have an account?{" "}
+          Don&apos;t have an account?{" "}
           <Link href="/register" className="login-link">
             Create account
           </Link>

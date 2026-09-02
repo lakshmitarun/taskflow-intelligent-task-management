@@ -22,31 +22,28 @@ const defaultForm = {
   assignedTo: [] as string[],
 };
 
-import { useAuthStore } from "@/store/auth-store";
-
 export function TaskForm({ task, onClose }: TaskFormProps) {
   const { addTask, updateTask } = useTaskStore();
   const { employees, fetchEmployees } = useEmployeeStore();
-  const { user } = useAuthStore();
-  const isAdmin = user?.role === "ADMIN";
-  const [form, setForm] = useState(defaultForm);
+  const [form, setForm] = useState(() =>
+    task
+      ? {
+          title: task.title,
+          description: task.description ?? "",
+          priority: task.priority,
+          deadline: task.deadline,
+          estimatedHours: task.estimatedHours,
+          status: task.status,
+          assignedTo: normalizeAssignedTo(task.assignedTo),
+        }
+      : defaultForm
+  );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     fetchEmployees();
-    if (task) {
-      setForm({
-        title: task.title,
-        description: task.description ?? "",
-        priority: task.priority,
-        deadline: task.deadline,
-        estimatedHours: task.estimatedHours,
-        status: task.status,
-        assignedTo: normalizeAssignedTo(task.assignedTo),
-      });
-    }
-  }, [task, fetchEmployees]);
+  }, [fetchEmployees]);
 
   function validate() {
     const errs: Record<string, string> = {};
@@ -222,49 +219,45 @@ export function TaskForm({ task, onClose }: TaskFormProps) {
                       }}
                     >
                       <span>{emp.name} ({emp.role})</span>
-                      {isAdmin && (
-                        <button
-                          type="button"
-                          onClick={() => removeEmployee(empId)}
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            background: "none",
-                            border: "none",
-                            color: "var(--primary)",
-                            cursor: "pointer",
-                            padding: "0"
-                          }}
-                          title="Remove employee"
-                        >
-                          <X size={12} />
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => removeEmployee(empId)}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          background: "none",
+                          border: "none",
+                          color: "var(--primary)",
+                          cursor: "pointer",
+                          padding: "0"
+                        }}
+                        title="Remove employee"
+                      >
+                        <X size={12} />
+                      </button>
                     </span>
                   );
                 })
               )}
             </div>
 
-            {/* Select dropdown to add employee (Admin only) */}
-            {isAdmin && (
-              <select
-                className="form-input form-select"
-                value=""
-                onChange={(e) => {
-                  addEmployee(e.target.value);
-                  e.target.value = "";
-                }}
-              >
-                <option value="">+ Add Team Member…</option>
-                {unassignedEmployees.map((emp) => (
-                  <option key={emp._id} value={emp._id}>
-                    {emp.name} ({emp.role})
-                  </option>
-                ))}
-              </select>
-            )}
+            {/* Select dropdown to add employee */}
+            <select
+              className="form-input form-select"
+              value=""
+              onChange={(e) => {
+                addEmployee(e.target.value);
+                e.target.value = "";
+              }}
+            >
+              <option value="">+ Add Team Member…</option>
+              {unassignedEmployees.map((emp) => (
+                <option key={emp._id} value={emp._id}>
+                  {emp.name} ({emp.role})
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Actions */}

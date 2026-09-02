@@ -26,7 +26,9 @@ export async function PATCH(
     const { id } = await params;
     const body = await request.json();
 
-    const { _id: _, createdAt: _c, ...updates } = body;
+    const updates = { ...body };
+    delete updates._id;
+    delete updates.createdAt;
     const patch = { ...updates, updatedAt: new Date().toISOString() };
 
     const col = await getEmployeesCollection();

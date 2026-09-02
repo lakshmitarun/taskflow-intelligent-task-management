@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Employee } from "@/types/employee";
 import { useEmployeeStore } from "@/store/employee-store";
 import { X } from "lucide-react";
@@ -10,29 +10,16 @@ interface EmployeeFormProps {
   onClose: () => void;
 }
 
-const defaultForm = {
-  name: "",
-  email: "",
-  role: "",
-  department: "",
-};
-
 export function EmployeeForm({ employee, onClose }: EmployeeFormProps) {
   const { addEmployee, updateEmployee } = useEmployeeStore();
-  const [form, setForm] = useState(defaultForm);
+  const [form, setForm] = useState(() => ({
+    name: employee?.name ?? "",
+    email: employee?.email ?? "",
+    role: employee?.role ?? "",
+    department: employee?.department ?? "",
+  }));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (employee) {
-      setForm({
-        name: employee.name,
-        email: employee.email,
-        role: employee.role,
-        department: employee.department ?? "",
-      });
-    }
-  }, [employee]);
 
   function validate() {
     const errs: Record<string, string> = {};

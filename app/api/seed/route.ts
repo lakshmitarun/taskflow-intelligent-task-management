@@ -4,6 +4,13 @@ import { format, addDays, subDays } from "date-fns";
 
 export async function GET() {
   try {
+    if (process.env.NODE_ENV === "production") {
+      return Response.json(
+        { error: "Forbidden: Database seeding is disabled in production" },
+        { status: 403 }
+      );
+    }
+
     const db = await getDb();
     const taskCol = await getTasksCollection();
     const userCol = db.collection("users");

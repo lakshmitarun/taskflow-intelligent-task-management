@@ -72,8 +72,11 @@ export async function PATCH(
     const { id } = await params;
     const body = await request.json();
 
-    // Strip protected fields
-    const { id: _id, createdAt: _c, smartScore: _s, ...updates } = body;
+    const updates = { ...body };
+    delete updates.id;
+    delete updates._id;
+    delete updates.createdAt;
+    delete updates.smartScore;
 
     const col = await getTasksCollection();
     const existingTask = await col.findOne({ _id: new ObjectId(id) });
@@ -93,23 +96,6 @@ export async function PATCH(
         { error: "Forbidden: You are not assigned to this task" },
         { status: 403 }
       );
-    }
-
-    // Rule 2: Only Admin can change task assignment (reassign / add / remove employees)
-    if (!isAdmin && updates.assignedTo !== undefined) {
-      const existingAssignees = normalizeAssignedTo(existingTask.assignedTo).sort();
-      const newAssignees = normalizeAssignedTo(updates.assignedTo).sort();
-
-      const assignmentChanged =
-        existingAssignees.length !== newAssignees.length ||
-        existingAssignees.some((val, idx) => val !== newAssignees[idx]);
-
-      if (assignmentChanged) {
-        return Response.json(
-          { error: "Forbidden: Only administrators can modify task assignments" },
-          { status: 403 }
-        );
-      }
     }
 
     if (updates.assignedTo !== undefined) {

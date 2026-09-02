@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { 
   ShieldCheck, 
   ShieldAlert, 
-  User, 
   Mail, 
   Calendar, 
   Check, 
@@ -43,8 +42,6 @@ export default function ApprovalsPage() {
   }, [user, router]);
 
   async function fetchRequests() {
-    setLoading(true);
-    setError(null);
     try {
       const res = await fetch("/api/approvals");
       if (!res.ok) {
@@ -61,7 +58,24 @@ export default function ApprovalsPage() {
   }
 
   useEffect(() => {
-    fetchRequests();
+    let ignore = false;
+    async function load() {
+      try {
+        const res = await fetch("/api/approvals");
+        if (!res.ok) throw new Error("Failed to fetch approvals list");
+        const data = await res.json();
+        if (!ignore) setRequests(data);
+      } catch (err: unknown) {
+        console.error(err);
+        if (!ignore) setError("Failed to load approval requests.");
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   async function handleDecision(userId: string, action: "ACCEPT" | "REJECT") {

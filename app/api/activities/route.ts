@@ -50,6 +50,11 @@ export async function GET(request: NextRequest) {
 // POST /api/activities
 export async function POST(request: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json();
     const db = await getDb();
     const col = db.collection("activities");

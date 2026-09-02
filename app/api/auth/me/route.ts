@@ -1,4 +1,3 @@
-import { NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { verifySession, signSession } from "@/lib/auth";
 import { getDb } from "@/lib/mongodb";

@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { Moon, Sun, Menu, Clock, Bell } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { useAuthStore } from "@/store/auth-store";
 import { useUIStore } from "@/store/ui-store";
 import { useTaskStore } from "@/store/task-store";
@@ -19,16 +19,17 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
   "/register": { title: "Register", subtitle: "Create an account" },
 };
 
+const emptySubscribe = () => () => {};
+
 export function Header() {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const { user, init } = useAuthStore();
   const { toggleSidebar } = useUIStore();
   const { tasks } = useTaskStore();
 
   useEffect(() => {
-    setMounted(true);
     init();
   }, [init]);
 

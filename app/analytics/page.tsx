@@ -4,10 +4,9 @@ import { useEffect, useState } from "react";
 import { useTaskStore } from "@/store/task-store";
 import { useEmployeeStore } from "@/store/employee-store";
 import { isOverdue } from "@/lib/priority-calculator";
-import { differenceInDays, parseISO, startOfDay, startOfWeek, endOfWeek } from "date-fns";
+import { differenceInDays, parseISO, startOfDay } from "date-fns";
 import {
   TrendingUp,
-  CheckCircle2,
   AlertTriangle,
   Clock,
   Users,
@@ -89,7 +88,6 @@ export default function AnalyticsPage() {
   const completionRate = total === 0 ? 0 : Math.round((completed / total) * 100);
 
   const today = startOfDay(new Date());
-  const weekEnd = endOfWeek(today);
   const dueThisWeek = tasks.filter((t) => {
     if (t.status === "COMPLETED") return false;
     const dl = startOfDay(parseISO(t.deadline));
