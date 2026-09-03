@@ -1,68 +1,42 @@
 "use client";
 
 import { clsx } from "clsx";
-import { LucideIcon } from "lucide-react";
+import { Folder, ClipboardList, Timer, CheckCircle2, AlertTriangle, Activity } from "lucide-react";
 
 interface StatsCardProps {
   label: string;
   value: number;
-  icon: LucideIcon;
   variant: "total" | "todo" | "progress" | "completed" | "overdue";
-  sublabel?: string;
+  sublabel: string;
+  badgeText: string;
 }
 
-const sparklinePaths: Record<string, { d: string; color: string }> = {
-  total: {
-    d: "M0,25 Q15,15 30,20 T60,5 T90,18",
-    color: "#2563eb",
-  },
-  todo: {
-    d: "M0,18 Q15,25 30,10 T60,20 T90,8",
-    color: "#f59e0b",
-  },
-  progress: {
-    d: "M0,22 Q15,8 30,18 T60,12 T90,5",
-    color: "#6366f1",
-  },
-  completed: {
-    d: "M0,28 Q15,20 30,22 T60,10 T90,4",
-    color: "#10b981",
-  },
-  overdue: {
-    d: "M0,15 Q15,25 30,10 T60,22 T90,12",
-    color: "#ef4444",
-  },
-};
-
-export function StatsCard({ label, value, icon: Icon, variant, sublabel }: StatsCardProps) {
-  const sparkline = sparklinePaths[variant];
-
+export function StatsCard({ label, value, variant, sublabel, badgeText }: StatsCardProps) {
   return (
-    <div className={clsx("stats-card", `stats-card--${variant}`)} style={{ position: "relative" }}>
-      <div className="stats-card__top">
-        <div className="stats-card__icon">
-          <Icon size={20} />
-        </div>
-        <div className="stats-card__value-wrapper">
-          <span className="stats-card__value">{value}</span>
-          <span className="stats-card__label">{label}</span>
+    <div className={clsx("stats-card-v2", `stats-card-v2--${variant}`)}>
+      <div className="stats-card-v2__header">
+        <span className="stats-card-v2__label">{label.toUpperCase()}</span>
+        <div className="stats-card-v2__icon-box">
+          {variant === "total" && <Folder size={16} />}
+          {variant === "todo" && <ClipboardList size={16} />}
+          {variant === "progress" && <Timer size={16} />}
+          {variant === "completed" && <CheckCircle2 size={16} />}
+          {variant === "overdue" && <AlertTriangle size={16} />}
         </div>
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "4px" }}>
-        {sublabel && <span className="stats-card__sublabel">{sublabel}</span>}
-        <svg width="60" height="24" viewBox="0 0 90 30" fill="none" style={{ overflow: "visible", marginLeft: "auto" }}>
-          <path
-            d={sparkline.d}
-            stroke={sparkline.color}
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            fill="none"
-          />
-        </svg>
+      <div className="stats-card-v2__value-row">
+        <span className="stats-card-v2__value">{value}</span>
+        <span className={clsx("stats-card-v2__badge", `stats-badge--${variant}`)}>
+          {variant === "total" && <Activity size={11} style={{ marginRight: 3 }} />}
+          {badgeText}
+        </span>
       </div>
+
+      <div className="stats-card-v2__sublabel">{sublabel}</div>
     </div>
   );
 }
+
 
 

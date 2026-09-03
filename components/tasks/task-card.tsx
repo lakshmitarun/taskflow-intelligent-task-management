@@ -5,7 +5,7 @@ import { useTaskStore } from "@/store/task-store";
 import { useEmployeeStore } from "@/store/employee-store";
 import { useAuthStore } from "@/store/auth-store";
 import { getDeadlineLabel, isOverdue } from "@/lib/priority-calculator";
-import { Pencil, Trash2, Clock, Zap, ChevronRight, UserCircle } from "lucide-react";
+import { Pencil, Trash2, Clock, Zap, ChevronRight, User } from "lucide-react";
 import { clsx } from "clsx";
 
 interface TaskCardProps {
@@ -13,19 +13,7 @@ interface TaskCardProps {
   onEdit: (task: Task) => void;
 }
 
-const priorityConfig = {
-  HIGH: { label: "High", cls: "badge--high" },
-  MEDIUM: { label: "Medium", cls: "badge--medium" },
-  LOW: { label: "Low", cls: "badge--low" },
-};
-
-const statusConfig = {
-  TODO: { label: "To Do", cls: "status--todo" },
-  IN_PROGRESS: { label: "In Progress", cls: "status--progress" },
-  COMPLETED: { label: "Completed", cls: "status--completed" },
-};
-
-const nextStatus: Record<TaskStatus, TaskStatus | null> = {
+const nextStatusMap: Record<TaskStatus, TaskStatus | null> = {
   TODO: "IN_PROGRESS",
   IN_PROGRESS: "COMPLETED",
   COMPLETED: null,
@@ -36,11 +24,9 @@ export function TaskCard({ task, onEdit }: TaskCardProps) {
   const { employees } = useEmployeeStore();
   const { user } = useAuthStore();
 
-  const priority = priorityConfig[task.priority];
-  const status = statusConfig[task.status];
   const deadlineLabel = getDeadlineLabel(task);
   const overdue = isOverdue(task);
-  const next = nextStatus[task.status];
+  const next = nextStatusMap[task.status];
 
   const assignedIds = normalizeAssignedTo(task.assignedTo);
   const assignedEmployees = employees.filter((e) => assignedIds.includes(e._id));
@@ -61,61 +47,195 @@ export function TaskCard({ task, onEdit }: TaskCardProps) {
   const canEdit = isAdmin || isAssigned;
   const canDelete = isAdmin;
 
+  // Priority color config matching exact screenshot theme
+  let priorityBg = "#b45309"; // Medium (Amber)
+  let priorityColor = "#ffedd5";
+
+  if (task.priority === "HIGH") {
+    priorityBg = "#991b1b";
+    priorityColor = "#fecaca";
+  } else if (task.priority === "LOW") {
+    priorityBg = "#047857";
+    priorityColor = "#a7f3d0";
+  }
+
+  // Status color config matching screenshot
+  let statusText = "To Do";
+  let statusBg = "rgba(234, 179, 8, 0.15)";
+  let statusColor = "#eab308";
+
+  if (task.status === "IN_PROGRESS") {
+    statusText = "In Progress";
+    statusBg = "rgba(168, 85, 247, 0.15)";
+    statusColor = "#c084fc";
+  } else if (task.status === "COMPLETED") {
+    statusText = "Completed";
+    statusBg = "rgba(16, 185, 129, 0.15)";
+    statusColor = "#34d399";
+  }
+
   return (
-    <div className={clsx("task-card", task.status === "COMPLETED" && "task-card--completed")}>
-      {/* Top row */}
-      <div className="task-card__top">
-        <div className="task-card__badges">
-          <span className={`badge ${priority.cls}`}>{priority.label}</span>
-          <span className={`status-badge ${status.cls}`}>{status.label}</span>
-        </div>
-        <div className="task-card__score">
-          <Zap size={12} />
-          {task.smartScore}
-        </div>
-      </div>
+    <div
+      className={clsx("task-card-v2", task.status === "COMPLETED" && "task-card-v2--completed")}
+      style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "16px", padding: "18px 20px", display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: "0 4px 14px rgba(0, 0, 0, 0.12)", position: "relative" }}
+    >
+      <div>
+        {/* Top Badges Row */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span
+              style={{
+                background: priorityBg,
+                color: priorityColor,
+                fontSize: "10px",
+                fontWeight: 800,
+                padding: "2px 9px",
+                borderRadius: "6px",
+                letterSpacing: "0.04em",
+                textTransform: "uppercase",
+              }}
+            >
+              {task.priority}
+            </span>
 
-      {/* Title + description */}
-      <h3 className="task-card__title">{task.title}</h3>
-      {task.description && (
-        <p className="task-card__desc">{task.description}</p>
-      )}
+            <span
+              style={{
+                background: statusBg,
+                color: statusColor,
+                fontSize: "10.5px",
+                fontWeight: 700,
+                padding: "2px 9px",
+                borderRadius: "6px",
+              }}
+            >
+              {statusText}
+            </span>
+          </div>
 
-      {/* Meta */}
-      <div className="task-card__meta">
-        <span className={clsx("deadline-chip", overdue && "deadline-chip--urgent")}>
-          <Clock size={12} />
-          {deadlineLabel}
-        </span>
-        <span className="hours-chip">~{task.estimatedHours}h</span>
-        {assignedEmployees.length > 0 && (
-          <span className="assigned-chip" title={assignedEmployees.map((e) => e.name).join(", ")}>
-            <UserCircle size={12} />
-            {assignedEmployees.map((e) => e.name).join(", ")}
-          </span>
-        )}
-      </div>
-
-      {/* Actions */}
-      <div className="task-card__actions">
-        {canEdit && next ? (
-          <button
-            className="btn btn--advance"
-            onClick={() => updateStatus(task.id, next)}
-            title={`Move to ${statusConfig[next].label}`}
+          <div
+            style={{
+              background: "rgba(37, 99, 235, 0.2)",
+              color: "#3b82f6",
+              border: "1px solid rgba(59, 130, 246, 0.3)",
+              fontSize: "11px",
+              fontWeight: 800,
+              padding: "2px 8px",
+              borderRadius: "9999px",
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+            }}
           >
-            <ChevronRight size={14} />
-            {statusConfig[next].label}
-          </button>
-        ) : (
-          <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>
-            {canEdit ? (task.status === "COMPLETED" ? "Completed" : "") : "Read only"}
-          </span>
+            <Zap size={11} fill="#3b82f6" />
+            <span>{task.smartScore ?? 75}</span>
+          </div>
+        </div>
+
+        {/* Title */}
+        <h3 style={{ fontSize: "16px", fontWeight: 700, color: "var(--text-primary)", marginBottom: "4px", lineHeight: 1.3 }}>
+          {task.title}
+        </h3>
+
+        {/* Description */}
+        {task.description && (
+          <p style={{ fontSize: "12.5px", color: "var(--text-muted)", marginBottom: "14px", lineHeight: 1.45 }}>
+            {task.description}
+          </p>
         )}
-        <div className="task-card__icon-actions">
+
+        {/* Meta Chips Row */}
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px", margin: "12px 0 14px 0" }}>
+          <span
+            style={{
+              background: "rgba(255, 255, 255, 0.04)",
+              border: "1px solid var(--border)",
+              borderRadius: "6px",
+              padding: "3px 9px",
+              fontSize: "11.5px",
+              color: overdue ? "#ef4444" : "var(--text-muted)",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "5px",
+            }}
+          >
+            <Clock size={12} />
+            <span>{deadlineLabel}</span>
+          </span>
+
+          <span
+            style={{
+              background: "rgba(255, 255, 255, 0.04)",
+              border: "1px solid var(--border)",
+              borderRadius: "6px",
+              padding: "3px 9px",
+              fontSize: "11.5px",
+              color: "var(--text-muted)",
+            }}
+          >
+            ~{task.estimatedHours}h
+          </span>
+
+          {assignedEmployees.map((emp) => (
+            <span
+              key={emp._id}
+              style={{
+                background: "rgba(37, 99, 235, 0.2)",
+                color: "#60a5fa",
+                border: "1px solid rgba(59, 130, 246, 0.3)",
+                borderRadius: "6px",
+                padding: "3px 9px",
+                fontSize: "10.5px",
+                fontWeight: 700,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+                textTransform: "uppercase",
+              }}
+            >
+              <User size={11} />
+              <span>{emp.name}</span>
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Footer Row */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid var(--border)", paddingTop: "12px", marginTop: "6px" }}>
+        <div>
+          {canEdit && next ? (
+            <button
+              className="btn btn--advance"
+              onClick={() => updateStatus(task.id, next)}
+              style={{
+                background: "rgba(99, 102, 241, 0.12)",
+                color: "#818cf8",
+                border: "1px solid rgba(99, 102, 241, 0.25)",
+                borderRadius: "8px",
+                padding: "4px 10px",
+                fontSize: "11.5px",
+                fontWeight: 700,
+              }}
+            >
+              <ChevronRight size={13} />
+              Move to {next === "IN_PROGRESS" ? "In Progress" : "Completed"}
+            </button>
+          ) : (
+            <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 500 }}>
+              {statusText}
+            </span>
+          )}
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           {canEdit && (
-            <button className="icon-btn" onClick={() => onEdit(task)} aria-label="Edit task">
-              <Pencil size={15} />
+            <button
+              className="icon-btn"
+              onClick={() => onEdit(task)}
+              aria-label="Edit task"
+              title="Edit task"
+              style={{ width: "30px", height: "30px" }}
+            >
+              <Pencil size={14} />
             </button>
           )}
           {canDelete && (
@@ -123,8 +243,10 @@ export function TaskCard({ task, onEdit }: TaskCardProps) {
               className="icon-btn icon-btn--danger"
               onClick={() => deleteTask(task.id)}
               aria-label="Delete task"
+              title="Delete task"
+              style={{ width: "30px", height: "30px" }}
             >
-              <Trash2 size={15} />
+              <Trash2 size={14} />
             </button>
           )}
         </div>
@@ -132,3 +254,4 @@ export function TaskCard({ task, onEdit }: TaskCardProps) {
     </div>
   );
 }
+

@@ -3,29 +3,17 @@
 import { useEffect } from "react";
 import { useTaskStore } from "@/store/task-store";
 import { useEmployeeStore } from "@/store/employee-store";
-import { getRecommendedTask, isOverdue } from "@/lib/priority-calculator";
+import { isOverdue } from "@/lib/priority-calculator";
 import { normalizeAssignedTo } from "@/types/task";
 import { StatsCard } from "@/components/dashboard/stats-card";
-import { Recommendation } from "@/components/dashboard/recommendation";
+import { TaskStatusOverview } from "@/components/dashboard/task-status-overview";
 import { DeadlineAlerts } from "@/components/dashboard/deadline-alerts";
+import { RecentActivity } from "@/components/dashboard/recent-activity";
+import { PriorityIndex } from "@/components/dashboard/priority-index";
 import { WorkloadOverview } from "@/components/dashboard/workload-overview";
-import {
-  LayoutDashboard,
-  ListTodo,
-  Loader2,
-  CheckCircle2,
-  AlertTriangle,
-  Zap,
-  Flag,
-} from "lucide-react";
+import { Zap, Flag } from "lucide-react";
 import Link from "next/link";
 import { useAuthStore } from "@/store/auth-store";
-
-const priorityColors = {
-  HIGH: "badge--high",
-  MEDIUM: "badge--medium",
-  LOW: "badge--low",
-};
 
 export default function DashboardPage() {
   const { tasks, fetchTasks, loading } = useTaskStore();
@@ -38,151 +26,148 @@ export default function DashboardPage() {
   }, [fetchTasks, fetchEmployees]);
 
   const isEmployee = user?.role === "EMPLOYEE";
-  const currentEmployee = employees.find(e => e.email.toLowerCase() === user?.email?.toLowerCase());
+  const currentEmployee = employees.find(
+    (e) => e.email.toLowerCase() === user?.email?.toLowerCase()
+  );
 
   const displayedTasks = isEmployee
-    ? tasks.filter((t) => normalizeAssignedTo(t.assignedTo).includes(currentEmployee?._id ?? ""))
+    ? tasks.filter((t) =>
+        normalizeAssignedTo(t.assignedTo).includes(currentEmployee?._id ?? "")
+      )
     : tasks;
 
+  // 100% Real Dynamic Stats computed from Database
   const total = displayedTasks.length;
   const todo = displayedTasks.filter((t) => t.status === "TODO").length;
   const inProgress = displayedTasks.filter((t) => t.status === "IN_PROGRESS").length;
   const completed = displayedTasks.filter((t) => t.status === "COMPLETED").length;
   const overdue = displayedTasks.filter((t) => isOverdue(t)).length;
-  const recommended = getRecommendedTask(displayedTasks);
 
-  const recentTasks = [...displayedTasks]
+  const urgentCount = displayedTasks.filter((t) => t.priority === "HIGH" && isOverdue(t)).length;
+  const highCount = displayedTasks.filter((t) => t.priority === "HIGH").length;
+  const mediumCount = displayedTasks.filter((t) => t.priority === "MEDIUM").length;
+  const lowCount = displayedTasks.filter((t) => t.priority === "LOW").length;
+
+  const topPriorityList = [...displayedTasks]
     .sort((a, b) => (b.smartScore ?? 0) - (a.smartScore ?? 0))
     .slice(0, 5);
 
   return (
-    <>
-      {/* Stats row */}
+    <div className="admin-dashboard-wrapper">
+      {/* 5 Admin Summary Cards */}
       <div className="stats-row">
         <StatsCard
           label="Total Tasks"
           value={total}
           sublabel="All tasks in the system"
-          icon={LayoutDashboard}
           variant="total"
+          badgeText={`${total} System`}
         />
         <StatsCard
           label="To Do"
           value={todo}
-          sublabel="Tasks to be started"
-          icon={ListTodo}
+          sublabel="Tasks waiting to start"
           variant="todo"
+          badgeText={`${todo} Queued`}
         />
         <StatsCard
           label="In Progress"
           value={inProgress}
-          sublabel="Tasks in progress"
-          icon={Loader2}
+          sublabel="Tasks currently active"
           variant="progress"
+          badgeText={`${inProgress} Active`}
         />
         <StatsCard
           label="Completed"
           value={completed}
           sublabel="Tasks completed"
-          icon={CheckCircle2}
           variant="completed"
+          badgeText={`${completed} Done`}
         />
         <StatsCard
           label="Overdue"
           value={overdue}
           sublabel="Tasks past due date"
-          icon={AlertTriangle}
           variant="overdue"
+          badgeText={`${overdue} Urgent`}
         />
       </div>
 
-      {/* Main grid */}
+      {/* Main Two-Column Grid */}
       <div className="dashboard-grid">
-        {/* Left: Recommendation + Deadline Alerts */}
-        <div className="dashboard-col" style={{ gap: "24px" }}>
-          <Recommendation task={recommended} />
-          <DeadlineAlerts tasks={tasks} />
+        {/* Left Column */}
+        <div className="dashboard-col" style={{ gap: "20px" }}>
+          <TaskStatusOverview
+            total={total}
+            todo={todo}
+            inProgress={inProgress}
+            completed={completed}
+            overdue={overdue}
+          />
+          <DeadlineAlerts tasks={displayedTasks} />
+          <RecentActivity />
         </div>
 
-        {/* Right: Top Priority Tasks + Workload */}
-        <div className="dashboard-col" style={{ gap: "24px" }}>
-          <div className="alert-card-container">
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
-              <div className="section-heading" style={{ marginBottom: 0 }}>
-                <Flag size={16} />
+        {/* Right Column */}
+        <div className="dashboard-col" style={{ gap: "20px" }}>
+          <PriorityIndex
+            urgent={urgentCount}
+            high={highCount}
+            medium={mediumCount}
+            low={lowCount}
+          />
+
+          {/* Top Priority Tasks Card */}
+          <div className="tf-priority-card">
+            <div className="tf-priority-header">
+              <div className="tf-priority-title">
+                <Flag size={15} style={{ color: "#ef4444" }} />
                 <span>TOP PRIORITY TASKS</span>
               </div>
-              <Link href="/tasks" style={{ fontSize: "12px", color: "var(--primary)", fontWeight: 700 }}>
+              <Link href="/tasks" className="tf-priority-view-link">
                 View all →
               </Link>
             </div>
-            <div className="recent-tasks">
+
+            <div className="tf-priority-list">
               {loading && tasks.length === 0 ? (
-                <p style={{ fontSize: "13px", color: "var(--text-muted)", padding: "10px" }}>Loading tasks…</p>
-              ) : recentTasks.length === 0 ? (
-                <p style={{ fontSize: "13px", color: "var(--text-muted)", padding: "10px" }}>No tasks yet. Create your first task!</p>
+                <p style={{ fontSize: "13px", color: "var(--text-muted)", padding: "12px" }}>Loading tasks…</p>
+              ) : topPriorityList.length === 0 ? (
+                <p style={{ fontSize: "13px", color: "var(--text-muted)", padding: "12px" }}>No tasks in system.</p>
               ) : (
-                recentTasks.map((task) => (
-                  <div key={task.id} className="recent-task-item">
-                    <span className={`badge ${priorityColors[task.priority]}`}>
-                      {task.priority}
+                topPriorityList.map((task) => (
+                  <div key={task.id} className="tf-priority-item">
+                    <span className={`tf-priority-badge tf-priority-badge--${task.priority.toLowerCase()}`}>
+                      {task.priority === "HIGH" ? "HIGH" : task.priority === "MEDIUM" ? "MED" : "LOW"}
                     </span>
-                    <span className="recent-task-item__title">{task.title}</span>
-                    <span className="recent-task-item__score">
-                      <Zap size={11} />
-                      {task.smartScore}
+                    <span className="tf-priority-task-title">{task.title}</span>
+                    <span className="tf-priority-score-tag">
+                      Score <span style={{ color: "var(--text-primary)", fontWeight: 700 }}>{task.smartScore ?? 50}</span>
                     </span>
                   </div>
                 ))
               )}
             </div>
+
+            <div className="tf-priority-footer">
+              <div className="tf-priority-ai-tag">
+                <Zap size={13} style={{ color: "#818cf8" }} />
+                <span>AI priority sorting active</span>
+              </div>
+              <span className="tf-priority-count-tag">{topPriorityList.length} of {total} shown</span>
+            </div>
           </div>
 
-          {!isEmployee ? (
-            <WorkloadOverview employees={employees} />
-          ) : (
-            <div className="workload-card-container">
-              <div className="section-heading">
-                <CheckCircle2 size={16} />
-                <span>MY TASK SUMMARY</span>
-              </div>
-              <div style={{ padding: "10px 0" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px", fontSize: "13px", color: "var(--text-secondary)" }}>
-                  <span>Task Completion Rate</span>
-                  <span style={{ fontWeight: 700, color: "var(--primary)" }}>{total === 0 ? 0 : Math.round((completed / total) * 100)}%</span>
-                </div>
-                <div style={{ height: "8px", background: "var(--border)", borderRadius: "4px", overflow: "hidden", marginBottom: "20px" }}>
-                  <div style={{
-                    width: `${total === 0 ? 0 : Math.round((completed / total) * 100)}%`,
-                    height: "100%",
-                    background: "var(--primary)",
-                    borderRadius: "4px"
-                  }} />
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px", textAlign: "center", fontSize: "13px" }}>
-                  <div style={{ background: "var(--todo-bg)", padding: "12px", borderRadius: "8px" }}>
-                    <div style={{ color: "var(--todo)", marginBottom: "4px", fontSize: "11px", fontWeight: 700 }}>TO DO</div>
-                    <div style={{ fontSize: "18px", fontWeight: 800, color: "var(--text-primary)" }}>{todo}</div>
-                  </div>
-                  <div style={{ background: "var(--progress-bg)", padding: "12px", borderRadius: "8px" }}>
-                    <div style={{ color: "var(--progress)", marginBottom: "4px", fontSize: "11px", fontWeight: 700 }}>IN PROGRESS</div>
-                    <div style={{ fontSize: "18px", fontWeight: 800, color: "var(--text-primary)" }}>{inProgress}</div>
-                  </div>
-                  <div style={{ background: "var(--completed-bg)", padding: "12px", borderRadius: "8px" }}>
-                    <div style={{ color: "var(--completed)", marginBottom: "4px", fontSize: "11px", fontWeight: 700 }}>COMPLETED</div>
-                    <div style={{ fontSize: "18px", fontWeight: 800, color: "var(--text-primary)" }}>{completed}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+          <WorkloadOverview employees={employees} />
         </div>
       </div>
 
       <footer className="app-footer">
-        © 2026 TaskFlow. All rights reserved.
+        © 2026 TaskFlow Admin Panel. Organization overview mode.
       </footer>
-    </>
+    </div>
   );
 }
+
+
 

@@ -27,15 +27,6 @@ interface TeamMemberPerformance {
   completionRate: number;
 }
 
-function ProgressBar({ value, max, cls }: { value: number; max: number; cls: string }) {
-  const pct = max === 0 ? 0 : Math.min((value / max) * 100, 100);
-  return (
-    <div className="analytics-bar-track">
-      <div className={`analytics-bar-fill ${cls}`} style={{ width: `${pct}%` }} />
-    </div>
-  );
-}
-
 export default function AnalyticsPage() {
   const { tasks, fetchTasks, loading } = useTaskStore();
   const { employees, fetchEmployees } = useEmployeeStore();
@@ -101,113 +92,164 @@ export default function AnalyticsPage() {
       : (tasks.filter((t) => t.status !== "COMPLETED").length / employees.length).toFixed(1);
 
   return (
-    <>
-      {/* Top KPI cards */}
-      <div className="analytics-kpi-grid">
-        <div className="analytics-kpi-card">
-          <div className="analytics-kpi-icon analytics-kpi-icon--green">
-            <TrendingUp size={22} />
+    <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+      {/* Top 5 KPI Cards Grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "14px" }}>
+        {/* KPI Card 1 - Completion Rate */}
+        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "14px", padding: "16px 18px", display: "flex", alignItems: "center", gap: "14px", boxShadow: "0 4px 14px rgba(0, 0, 0, 0.1)" }}>
+          <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "rgba(16, 185, 129, 0.15)", color: "#10b981", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <TrendingUp size={18} />
           </div>
           <div>
-            <p className="analytics-kpi-value">{completionRate}%</p>
-            <p className="analytics-kpi-label">Completion Rate</p>
-          </div>
-        </div>
-        <div className="analytics-kpi-card">
-          <div className="analytics-kpi-icon analytics-kpi-icon--red">
-            <AlertTriangle size={22} />
-          </div>
-          <div>
-            <p className="analytics-kpi-value">{overdueCount}</p>
-            <p className="analytics-kpi-label">Overdue Tasks</p>
-          </div>
-        </div>
-        <div className="analytics-kpi-card">
-          <div className="analytics-kpi-icon analytics-kpi-icon--orange">
-            <Zap size={22} />
-          </div>
-          <div>
-            <p className="analytics-kpi-value">{highPriorityPending}</p>
-            <p className="analytics-kpi-label">High Priority Pending</p>
-          </div>
-        </div>
-        <div className="analytics-kpi-card">
-          <div className="analytics-kpi-icon analytics-kpi-icon--blue">
-            <Clock size={22} />
-          </div>
-          <div>
-            <p className="analytics-kpi-value">{dueThisWeek}</p>
-            <p className="analytics-kpi-label">Due This Week</p>
-          </div>
-        </div>
-        <div className="analytics-kpi-card">
-          <div className="analytics-kpi-icon analytics-kpi-icon--purple">
-            <Users size={22} />
-          </div>
-          <div>
-            <p className="analytics-kpi-value">{avgTasksPerEmployee}</p>
-            <p className="analytics-kpi-label">Avg Tasks / Member</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Completion Rate */}
-      <div className="analytics-section">
-        <div className="analytics-section-header">
-          <BarChart2 size={16} />
-          <h2 className="analytics-section-title">Team Performance</h2>
-        </div>
-        <div className="analytics-completion">
-          <div className="analytics-completion-header">
-            <span className="analytics-completion-label">Completion Rate</span>
-            <span className="analytics-completion-pct">{completionRate}%</span>
-          </div>
-          <ProgressBar value={completed} max={total} cls="analytics-bar-fill--green" />
-        </div>
-
-        {/* Status breakdown */}
-        <div className="analytics-breakdown">
-          {[
-            { label: "Completed", value: completed, max: total, cls: "analytics-bar-fill--green", dot: "dot--green" },
-            { label: "In Progress", value: inProgress, max: total, cls: "analytics-bar-fill--blue", dot: "dot--blue" },
-            { label: "To Do", value: todo, max: total, cls: "analytics-bar-fill--gray", dot: "dot--gray" },
-            { label: "Overdue", value: overdueCount, max: total, cls: "analytics-bar-fill--red", dot: "dot--red" },
-          ].map(({ label, value, max, cls, dot }) => (
-            <div key={label} className="analytics-breakdown-row">
-              <div className="analytics-breakdown-label">
-                <span className={`analytics-dot ${dot}`} />
-                <span>{label}</span>
-              </div>
-              <ProgressBar value={value} max={max} cls={cls} />
-              <span className="analytics-breakdown-count">{value}</span>
+            <div style={{ fontSize: "22px", fontWeight: 800, color: "#ffffff", lineHeight: 1 }}>
+              {completionRate}%
             </div>
-          ))}
+            <div style={{ fontSize: "9.5px", fontWeight: 800, color: "var(--text-muted)", letterSpacing: "0.05em", textTransform: "uppercase", marginTop: "4px" }}>
+              COMPLETION RATE
+            </div>
+          </div>
+        </div>
+
+        {/* KPI Card 2 - Overdue Tasks */}
+        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "14px", padding: "16px 18px", display: "flex", alignItems: "center", gap: "14px", boxShadow: "0 4px 14px rgba(0, 0, 0, 0.1)" }}>
+          <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "rgba(239, 68, 68, 0.15)", color: "#ef4444", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <AlertTriangle size={18} />
+          </div>
+          <div>
+            <div style={{ fontSize: "22px", fontWeight: 800, color: "#ffffff", lineHeight: 1 }}>
+              {overdueCount}
+            </div>
+            <div style={{ fontSize: "9.5px", fontWeight: 800, color: "var(--text-muted)", letterSpacing: "0.05em", textTransform: "uppercase", marginTop: "4px" }}>
+              OVERDUE TASKS
+            </div>
+          </div>
+        </div>
+
+        {/* KPI Card 3 - High Priority Pending */}
+        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "14px", padding: "16px 18px", display: "flex", alignItems: "center", gap: "14px", boxShadow: "0 4px 14px rgba(0, 0, 0, 0.1)" }}>
+          <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "rgba(217, 119, 6, 0.15)", color: "#eab308", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <Zap size={18} />
+          </div>
+          <div>
+            <div style={{ fontSize: "22px", fontWeight: 800, color: "#ffffff", lineHeight: 1 }}>
+              {highPriorityPending}
+            </div>
+            <div style={{ fontSize: "9.5px", fontWeight: 800, color: "var(--text-muted)", letterSpacing: "0.05em", textTransform: "uppercase", marginTop: "4px" }}>
+              HIGH PRIORITY PENDING
+            </div>
+          </div>
+        </div>
+
+        {/* KPI Card 4 - Due This Week */}
+        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "14px", padding: "16px 18px", display: "flex", alignItems: "center", gap: "14px", boxShadow: "0 4px 14px rgba(0, 0, 0, 0.1)" }}>
+          <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "rgba(168, 85, 247, 0.15)", color: "#a855f7", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <Clock size={18} />
+          </div>
+          <div>
+            <div style={{ fontSize: "22px", fontWeight: 800, color: "#ffffff", lineHeight: 1 }}>
+              {dueThisWeek}
+            </div>
+            <div style={{ fontSize: "9.5px", fontWeight: 800, color: "var(--text-muted)", letterSpacing: "0.05em", textTransform: "uppercase", marginTop: "4px" }}>
+              DUE THIS WEEK
+            </div>
+          </div>
+        </div>
+
+        {/* KPI Card 5 - Avg Tasks / Member */}
+        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "14px", padding: "16px 18px", display: "flex", alignItems: "center", gap: "14px", boxShadow: "0 4px 14px rgba(0, 0, 0, 0.1)" }}>
+          <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "rgba(37, 99, 235, 0.15)", color: "#3b82f6", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <Users size={18} />
+          </div>
+          <div>
+            <div style={{ fontSize: "22px", fontWeight: 800, color: "#ffffff", lineHeight: 1 }}>
+              {avgTasksPerEmployee}
+            </div>
+            <div style={{ fontSize: "9.5px", fontWeight: 800, color: "var(--text-muted)", letterSpacing: "0.05em", textTransform: "uppercase", marginTop: "4px" }}>
+              AVG TASKS / MEMBER
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Priority Breakdown */}
-      <div className="analytics-section">
-        <div className="analytics-section-header">
-          <Zap size={16} />
-          <h2 className="analytics-section-title">Priority Distribution</h2>
+      {/* Team Performance Section */}
+      <div className="tf-priority-card">
+        <div className="tf-priority-header">
+          <div className="tf-priority-title">
+            <BarChart2 size={16} style={{ color: "#38bdf8" }} />
+            <span>Team Performance</span>
+          </div>
         </div>
-        <div className="analytics-breakdown">
-          {(["HIGH", "MEDIUM", "LOW"] as const).map((priority) => {
-            const count = tasks.filter((t) => t.priority === priority).length;
-            const dotMap = { HIGH: "dot--red", MEDIUM: "dot--orange", LOW: "dot--green" };
-            const barMap = {
-              HIGH: "analytics-bar-fill--red",
-              MEDIUM: "analytics-bar-fill--orange",
-              LOW: "analytics-bar-fill--green",
-            };
+
+        <div style={{ margin: "4px 0 16px 0" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "12.5px", color: "var(--text-secondary)", marginBottom: "8px" }}>
+            <span>Completion Rate</span>
+            <span style={{ fontWeight: 800, color: "#38bdf8" }}>{completionRate}%</span>
+          </div>
+          <div style={{ height: "7px", background: "rgba(255, 255, 255, 0.08)", borderRadius: "4px", overflow: "hidden" }}>
+            <div style={{ width: `${completionRate}%`, height: "100%", background: "#10b981", borderRadius: "4px" }} />
+          </div>
+        </div>
+
+        {/* Status Breakdown list */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px", borderTop: "1px solid var(--border)", paddingTop: "14px" }}>
+          {[
+            { label: "Completed", value: completed, color: "#10b981" },
+            { label: "In Progress", value: inProgress, color: "#a855f7" },
+            { label: "To Do", value: todo, color: "#64748b" },
+            { label: "Overdue", value: overdueCount, color: "#ef4444" },
+          ].map((item) => {
+            const pct = total === 0 ? 0 : Math.min((item.value / total) * 100, 100);
             return (
-              <div key={priority} className="analytics-breakdown-row">
-                <div className="analytics-breakdown-label">
-                  <span className={`analytics-dot ${dotMap[priority]}`} />
-                  <span>{priority.charAt(0) + priority.slice(1).toLowerCase()} Priority</span>
+              <div key={item.label} style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", width: "110px", fontSize: "12.5px", color: "var(--text-secondary)" }}>
+                  <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: item.color }} />
+                  <span>{item.label}</span>
                 </div>
-                <ProgressBar value={count} max={total} cls={barMap[priority]} />
-                <span className="analytics-breakdown-count">{count}</span>
+
+                <div style={{ flex: 1, height: "6px", background: "rgba(255, 255, 255, 0.06)", borderRadius: "3px", overflow: "hidden" }}>
+                  <div style={{ width: `${pct}%`, height: "100%", background: item.color, borderRadius: "3px" }} />
+                </div>
+
+                <span style={{ fontSize: "12.5px", fontWeight: 700, color: "var(--text-primary)", width: "24px", textAlign: "right" }}>
+                  {item.value}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Priority Distribution Section */}
+      <div className="tf-priority-card">
+        <div className="tf-priority-header">
+          <div className="tf-priority-title">
+            <Zap size={16} style={{ color: "#38bdf8" }} />
+            <span>Priority Distribution</span>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "4px" }}>
+          {[
+            { priority: "HIGH", label: "High Priority", color: "#ef4444" },
+            { priority: "MEDIUM", label: "Medium Priority", color: "#f97316" },
+            { priority: "LOW", label: "Low Priority", color: "#10b981" },
+          ].map((item) => {
+            const count = tasks.filter((t) => t.priority === item.priority).length;
+            const pct = total === 0 ? 0 : Math.min((count / total) * 100, 100);
+            return (
+              <div key={item.priority} style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", width: "120px", fontSize: "12.5px", color: "var(--text-secondary)" }}>
+                  <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: item.color }} />
+                  <span>{item.label}</span>
+                </div>
+
+                <div style={{ flex: 1, height: "6px", background: "rgba(255, 255, 255, 0.06)", borderRadius: "3px", overflow: "hidden" }}>
+                  <div style={{ width: `${pct}%`, height: "100%", background: item.color, borderRadius: "3px" }} />
+                </div>
+
+                <span style={{ fontSize: "12.5px", fontWeight: 700, color: "var(--text-primary)", width: "24px", textAlign: "right" }}>
+                  {count}
+                </span>
               </div>
             );
           })}
@@ -215,14 +257,16 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Team Member Performance Section */}
-      <div className="analytics-section" style={{ gridColumn: "span 2" }}>
-        <div className="analytics-section-header">
-          <Users size={16} />
-          <h2 className="analytics-section-title">Team Member Performance</h2>
+      <div className="tf-priority-card">
+        <div className="tf-priority-header">
+          <div className="tf-priority-title">
+            <Users size={16} style={{ color: "#818cf8" }} />
+            <span>Team Member Performance</span>
+          </div>
         </div>
-        
+
         {statsLoading ? (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "40px", color: "var(--text-muted)", gap: "8px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "30px", color: "var(--text-muted)", gap: "8px" }}>
             <Loader2 size={18} className="spin" />
             <span>Loading team statistics...</span>
           </div>
@@ -230,55 +274,62 @@ export default function AnalyticsPage() {
           <p style={{ padding: "20px", color: "var(--text-muted)", textAlign: "center" }}>No team members found.</p>
         ) : (
           <div style={{ overflowX: "auto" }}>
-            <table className="performance-table" style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px", textAlign: "left", marginTop: "12px" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", marginTop: "8px" }}>
               <thead>
-                <tr style={{ borderBottom: "1px solid var(--border)", paddingBottom: "8px", opacity: 0.8 }}>
-                  <th style={{ padding: "12px 8px" }}>Team Member</th>
-                  <th style={{ padding: "12px 8px" }}>Total Tasks</th>
-                  <th style={{ padding: "12px 8px" }}>Completed</th>
-                  <th style={{ padding: "12px 8px" }}>In Progress</th>
-                  <th style={{ padding: "12px 8px" }}>To Do</th>
-                  <th style={{ padding: "12px 8px", width: "250px" }}>Completion Rate</th>
+                <tr style={{ borderBottom: "1px solid var(--border)", color: "var(--text-muted)", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                  <th style={{ padding: "10px 12px", textAlign: "left" }}>Team Member</th>
+                  <th style={{ padding: "10px 12px", textAlign: "center" }}>Total Tasks</th>
+                  <th style={{ padding: "10px 12px", textAlign: "center" }}>Completed</th>
+                  <th style={{ padding: "10px 12px", textAlign: "center" }}>In Progress</th>
+                  <th style={{ padding: "10px 12px", textAlign: "center" }}>To Do</th>
+                  <th style={{ padding: "10px 12px", textAlign: "right" }}>Completion Rate</th>
                 </tr>
               </thead>
               <tbody>
-                {teamStats.map((member) => (
-                  <tr key={member.employeeId} style={{ borderBottom: "1px solid var(--border)", transition: "background 0.2s" }}>
-                    <td style={{ padding: "12px 8px", fontWeight: 500 }}>{member.employeeName}</td>
-                    <td style={{ padding: "12px 8px" }}>{member.totalAssigned}</td>
-                    <td style={{ padding: "12px 8px" }}>
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                        <span className="status-dot" style={{ display: "inline-block", background: "var(--completed)" }} />
-                        {member.completed}
-                      </span>
-                    </td>
-                    <td style={{ padding: "12px 8px" }}>
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                        <span className="status-dot" style={{ display: "inline-block", background: "var(--progress)" }} />
-                        {member.inProgress}
-                      </span>
-                    </td>
-                    <td style={{ padding: "12px 8px" }}>
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                        <span className="status-dot" style={{ display: "inline-block", background: "var(--text-muted)" }} />
-                        {member.todo}
-                      </span>
-                    </td>
-                    <td style={{ padding: "12px 8px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                        <span style={{ fontWeight: 600, minWidth: "35px" }}>{member.completionRate}%</span>
-                        <div style={{ flex: 1, height: "6px", background: "var(--border)", borderRadius: "3px", overflow: "hidden" }}>
-                          <div style={{
-                            width: `${member.completionRate}%`,
-                            height: "100%",
-                            background: member.completionRate >= 70 ? "var(--completed)" : member.completionRate >= 40 ? "var(--medium)" : "var(--overdue)",
-                            borderRadius: "3px"
-                          }} />
+                {teamStats.map((member) => {
+                  const initial = member.employeeName.charAt(0).toUpperCase();
+                  const rate = member.completionRate;
+                  return (
+                    <tr key={member.employeeId} style={{ borderBottom: "1px solid var(--border)" }}>
+                      <td style={{ padding: "12px", display: "flex", alignItems: "center", gap: "10px" }}>
+                        <div style={{ width: "30px", height: "30px", borderRadius: "50%", background: "#2563eb", color: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 800 }}>
+                          {initial}
                         </div>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                        <span style={{ fontWeight: 700, color: "var(--text-primary)", textTransform: "uppercase", fontSize: "12.5px" }}>
+                          {member.employeeName}
+                        </span>
+                      </td>
+
+                      <td style={{ padding: "12px", textAlign: "center", color: "var(--text-secondary)", fontWeight: 600 }}>
+                        {member.totalAssigned}
+                      </td>
+
+                      <td style={{ padding: "12px", textAlign: "center", color: member.completed > 0 ? "#10b981" : "var(--text-secondary)", fontWeight: 700 }}>
+                        {member.completed}
+                      </td>
+
+                      <td style={{ padding: "12px", textAlign: "center", color: "var(--text-secondary)", fontWeight: 600 }}>
+                        {member.inProgress}
+                      </td>
+
+                      <td style={{ padding: "12px", textAlign: "center", color: "var(--text-secondary)", fontWeight: 600 }}>
+                        {member.todo}
+                      </td>
+
+                      <td style={{ padding: "12px", textAlign: "right" }}>
+                        {rate === 100 ? (
+                          <span style={{ background: "rgba(16, 185, 129, 0.15)", color: "#34d399", fontSize: "11px", fontWeight: 700, padding: "3px 10px", borderRadius: "9999px" }}>
+                            100%
+                          </span>
+                        ) : (
+                          <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 600 }}>
+                            {rate}%
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -286,10 +337,10 @@ export default function AnalyticsPage() {
       </div>
 
       {loading && tasks.length === 0 && (
-        <p style={{ textAlign: "center", color: "var(--text-muted)", marginTop: "40px" }}>
+        <p style={{ textAlign: "center", color: "var(--text-muted)", marginTop: "20px" }}>
           Loading analytics…
         </p>
       )}
-    </>
+    </div>
   );
 }

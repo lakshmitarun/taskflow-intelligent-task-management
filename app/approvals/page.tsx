@@ -1,17 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { 
-  ShieldCheck, 
-  ShieldAlert, 
-  Mail, 
-  Calendar, 
-  Check, 
-  X, 
-  Loader2, 
-  CheckCircle, 
+import {
+  ShieldCheck,
+  ShieldAlert,
+  Mail,
+  Calendar,
+  Check,
+  X,
+  Loader2,
+  CheckCircle,
   XCircle,
-  AlertCircle
+  AlertCircle,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth-store";
 import { useRouter } from "next/navigation";
@@ -109,7 +109,7 @@ export default function ApprovalsPage() {
   const pendingRequests = requests.filter(
     (r) => r.adminRequestStatus === "PENDING"
   );
-  
+
   const historyRequests = requests.filter(
     (r) => r.adminRequestStatus === "APPROVED" || r.adminRequestStatus === "REJECTED"
   );
@@ -133,135 +133,166 @@ export default function ApprovalsPage() {
   }
 
   return (
-    <div className="approvals-container">
-      {/* Header action bar */}
-      <div className="page-action-bar">
-        <div className="page-action-bar__left">
-          <ShieldCheck size={18} style={{ color: "var(--primary)" }} />
-          <span className="page-action-bar__label">Admin Registrations</span>
-          {error && (
-            <div className="error-chip" style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-              <AlertCircle size={12} />
-              <span>{error}</span>
-            </div>
-          )}
-        </div>
+    <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+      {/* Section Header Title */}
+      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        <ShieldCheck size={20} style={{ color: "#38bdf8" }} />
+        <h2 style={{ fontSize: "18px", fontWeight: 800, color: "#ffffff", letterSpacing: "-0.01em" }}>
+          Admin Registrations
+        </h2>
+        {error && (
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#ef4444", fontSize: "12px", background: "rgba(239, 68, 68, 0.12)", padding: "4px 10px", borderRadius: "6px" }}>
+            <AlertCircle size={13} />
+            <span>{error}</span>
+          </div>
+        )}
       </div>
 
       {/* Tabs */}
-      <div className="approvals-tabs">
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "6px",
+          background: "var(--bg-card)",
+          border: "1px solid var(--border)",
+          borderRadius: "10px",
+          padding: "4px",
+          width: "fit-content",
+        }}
+      >
         <button
-          className={`approvals-tab-btn ${
-            activeTab === "PENDING" ? "approvals-tab-btn--active" : ""
-          }`}
           onClick={() => setActiveTab("PENDING")}
+          style={{
+            padding: "8px 16px",
+            borderRadius: "8px",
+            fontSize: "12.5px",
+            fontWeight: 700,
+            color: activeTab === "PENDING" ? "#ffffff" : "var(--text-muted)",
+            background: activeTab === "PENDING" ? "#2563eb" : "transparent",
+            boxShadow: activeTab === "PENDING" ? "0 2px 8px rgba(37, 99, 235, 0.3)" : "none",
+            transition: "all 0.15s ease",
+            cursor: "pointer",
+          }}
         >
           Pending Requests ({pendingRequests.length})
         </button>
         <button
-          className={`approvals-tab-btn ${
-            activeTab === "HISTORY" ? "approvals-tab-btn--active" : ""
-          }`}
           onClick={() => setActiveTab("HISTORY")}
+          style={{
+            padding: "8px 16px",
+            borderRadius: "8px",
+            fontSize: "12.5px",
+            fontWeight: 700,
+            color: activeTab === "HISTORY" ? "#ffffff" : "var(--text-muted)",
+            background: activeTab === "HISTORY" ? "#2563eb" : "transparent",
+            boxShadow: activeTab === "HISTORY" ? "0 2px 8px rgba(37, 99, 235, 0.3)" : "none",
+            transition: "all 0.15s ease",
+            cursor: "pointer",
+          }}
         >
           History ({historyRequests.length})
         </button>
       </div>
 
-      {/* Main content grid */}
-      <div className="approvals-grid">
-        {loading ? (
-          <div className="empty-state" style={{ padding: "60px" }}>
-            <Loader2 size={32} className="spin" style={{ color: "var(--primary)", marginBottom: "12px" }} />
-            <p style={{ color: "var(--text-secondary)" }}>Loading registration requests...</p>
-          </div>
-        ) : displayedRequests.length === 0 ? (
-          <div className="empty-state" style={{ padding: "60px", textAlign: "center" }}>
-            {activeTab === "PENDING" ? (
-              <>
-                <ShieldCheck size={48} style={{ color: "var(--completed)", opacity: 0.7, marginBottom: "16px" }} />
-                <h3>All Caught Up!</h3>
-                <p style={{ color: "var(--text-secondary)", marginTop: "8px", maxWidth: "400px", margin: "8px auto 0" }}>
-                  There are no pending administrator registration requests to review.
-                </p>
-              </>
-            ) : (
-              <>
-                <ShieldAlert size={48} style={{ color: "var(--text-muted)", opacity: 0.5, marginBottom: "16px" }} />
-                <h3>No History Yet</h3>
-                <p style={{ color: "var(--text-secondary)", marginTop: "8px", maxWidth: "400px", margin: "8px auto 0" }}>
-                  Admin approvals and rejections will be listed here after decisions are made.
-                </p>
-              </>
-            )}
-          </div>
-        ) : (
-          displayedRequests.map((req) => (
-            <div key={req.id} className="approval-card">
-              <div className="approval-card__info">
-                <div className="approval-card__name">{req.fullName}</div>
-                <div className="approval-card__meta">
-                  <div className="approval-card__meta-item">
-                    <Mail size={14} style={{ color: "var(--primary)" }} />
+      {/* Content Container */}
+      {loading ? (
+        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "16px", padding: "80px 40px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "12px", color: "var(--text-muted)" }}>
+          <Loader2 size={32} className="spin" style={{ color: "#2563eb" }} />
+          <p style={{ fontSize: "13px" }}>Loading registration requests...</p>
+        </div>
+      ) : displayedRequests.length === 0 ? (
+        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "16px", padding: "90px 40px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", boxShadow: "0 4px 14px rgba(0, 0, 0, 0.1)", minHeight: "420px" }}>
+          {activeTab === "PENDING" ? (
+            <>
+              <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: "rgba(16, 185, 129, 0.12)", color: "#10b981", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "16px" }}>
+                <ShieldCheck size={32} />
+              </div>
+              <h3 style={{ fontSize: "20px", fontWeight: 800, color: "#ffffff", marginBottom: "8px" }}>
+                All Caught Up!
+              </h3>
+              <p style={{ color: "var(--text-muted)", fontSize: "13px", maxWidth: "420px", lineHeight: 1.5 }}>
+                There are no pending administrator registration requests to review.
+              </p>
+            </>
+          ) : (
+            <>
+              <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: "rgba(255, 255, 255, 0.05)", color: "var(--text-muted)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "16px" }}>
+                <ShieldAlert size={32} />
+              </div>
+              <h3 style={{ fontSize: "20px", fontWeight: 800, color: "#ffffff", marginBottom: "8px" }}>
+                No History Yet
+              </h3>
+              <p style={{ color: "var(--text-muted)", fontSize: "13px", maxWidth: "420px", lineHeight: 1.5 }}>
+                Admin approvals and rejections will be listed here after decisions are made.
+              </p>
+            </>
+          )}
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          {displayedRequests.map((req) => (
+            <div key={req.id} className="approval-card-item">
+              <div className="approval-item-info">
+                <div className="approval-item-title">{req.fullName}</div>
+                <div className="approval-item-meta">
+                  <div className="approval-meta-pill">
+                    <Mail size={13} style={{ color: "#38bdf8" }} />
                     <span>{req.email}</span>
                   </div>
-                  <div className="approval-card__meta-item">
-                    <Calendar size={14} style={{ color: "var(--text-secondary)" }} />
+                  <div className="approval-meta-pill">
+                    <Calendar size={13} style={{ color: "var(--text-muted)" }} />
                     <span>Requested: {formatDate(req.adminRequestRequestedAt)}</span>
                   </div>
                 </div>
               </div>
 
-              <div className="approval-card__actions">
+              <div className="approval-actions-group">
                 {activeTab === "PENDING" ? (
                   <>
                     <button
-                      className="btn btn--ghost"
-                      style={{ 
-                        color: "var(--overdue)", 
-                        border: "1px solid rgba(239, 68, 68, 0.2)",
-                        background: "rgba(239, 68, 68, 0.03)"
-                      }}
+                      className="btn-reject"
                       onClick={() => handleDecision(req.id, "REJECT")}
                       disabled={actioningId !== null}
                     >
                       {actioningId === req.id ? (
-                        <Loader2 size={14} className="spin" />
+                        <Loader2 size={13} className="spin" />
                       ) : (
-                        <X size={14} />
+                        <X size={13} />
                       )}
                       Reject
                     </button>
                     <button
-                      className="btn btn--primary"
-                      style={{ background: "var(--completed)" }}
+                      className="btn-approve"
                       onClick={() => handleDecision(req.id, "ACCEPT")}
                       disabled={actioningId !== null}
                     >
                       {actioningId === req.id ? (
-                        <Loader2 size={14} className="spin" />
+                        <Loader2 size={13} className="spin" />
                       ) : (
-                        <Check size={14} />
+                        <Check size={13} />
                       )}
                       Approve
                     </button>
                   </>
                 ) : req.adminRequestStatus === "APPROVED" ? (
-                  <span className="approval-history-badge approval-history-badge--approved">
+                  <span style={{ background: "rgba(16, 185, 129, 0.15)", color: "#34d399", border: "1px solid rgba(16, 185, 129, 0.3)", fontSize: "11px", fontWeight: 700, padding: "4px 12px", borderRadius: "9999px", display: "inline-flex", alignItems: "center", gap: "6px" }}>
                     <CheckCircle size={12} />
                     Approved (ADMIN)
                   </span>
                 ) : (
-                  <span className="approval-history-badge approval-history-badge--rejected">
+                  <span style={{ background: "rgba(239, 68, 68, 0.15)", color: "#f87171", border: "1px solid rgba(239, 68, 68, 0.3)", fontSize: "11px", fontWeight: 700, padding: "4px 12px", borderRadius: "9999px", display: "inline-flex", alignItems: "center", gap: "6px" }}>
                     <XCircle size={12} />
                     Rejected (EMPLOYEE)
                   </span>
                 )}
               </div>
             </div>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
+
+
